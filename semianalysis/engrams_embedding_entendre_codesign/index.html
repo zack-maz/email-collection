@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Engrams Embedding Entendre — SemiAnalysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --void:     #0A0A0A;
+      --panel:    #0D0F12;
+      --hairline: #1E2227;
+      --muted:    #7C848D;
+      --text:     #C9CDD2;
+      --bright:   #E8EBED;
+      --accent:   #7AA2F7;
+      --good:     #9ECE6A;
+      --warn:     #E0AF68;
+      --danger:   #F7768E;
+      --purple:   #BB9AF7;
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+      --sans: 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
+      --ease: cubic-bezier(.2,.7,.2,1);
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--void); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.65; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+    a { color: var(--bright); text-decoration: none; }
+    a:hover { color: #fff; }
+
+    /* Rail */
+    .rail     { position: fixed; left: 32px; top: 80px; bottom: 80px; width: 1px; background: var(--hairline); pointer-events: none; z-index: 10; }
+    .rail-cap { position: fixed; left: 32px; top: 80px; width: 1px; height: 56px; background: var(--bright); opacity: 0.7; pointer-events: none; z-index: 11; }
+    .rail-label { position: fixed; left: 44px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--muted); pointer-events: none; z-index: 11; }
+    .rail-label.l0 { top: 74px; }
+    .rail-label.l1 { top: 480px; }
+
+    /* Nav */
+    .site-nav { display: flex; justify-content: space-between; align-items: center; height: 64px; padding: 0 80px; }
+    .site-nav .wordmark { font-size: 14px; font-weight: 500; color: var(--bright); }
+    .site-nav .nav-links { display: flex; gap: 28px; font-size: 14px; }
+    .site-nav .nav-links a { color: var(--text); }
+    .site-nav .nav-links a.active { color: var(--bright); }
+
+    /* Page shell */
+    .page { padding: 0 80px 80px; }
+
+    /* Hero */
+    .hero { padding: 56px 0 48px; border-bottom: 1px solid var(--hairline); }
+    .hero-eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+    .hero h1 { font-size: clamp(26px, 3.5vw, 42px); font-weight: 500; color: var(--bright); line-height: 1.1; letter-spacing: -0.02em; max-width: 720px; margin-bottom: 16px; text-wrap: pretty; }
+    .hero p { color: var(--text); font-size: 18px; line-height: 1.65; max-width: 560px; margin-bottom: 20px; text-wrap: pretty; }
+    .hero-meta { display: flex; align-items: baseline; gap: 24px; margin-bottom: 28px; flex-wrap: wrap; }
+    .hero-meta-item { display: flex; align-items: baseline; gap: 8px; }
+    .hero-meta-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .hero-meta-val { font-size: 14px; color: var(--text); }
+    .progress-bar-wrap { background: var(--hairline); height: 1px; max-width: 400px; overflow: hidden; }
+    .progress-bar-fill { background: var(--accent); height: 100%; width: 0%; transition: width 0.4s var(--ease); }
+
+    /* Section nav pills */
+    .sec-nav { display: flex; gap: 0; flex-wrap: wrap; border-bottom: 1px solid var(--hairline); margin: 40px 0; }
+    .sec-btn { background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); padding: 10px 0; margin-right: 24px; margin-bottom: -1px; font-family: var(--sans); font-size: 13px; cursor: pointer; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
+    .sec-btn:hover { color: var(--text); }
+    .sec-btn.active { color: var(--bright); border-bottom-color: var(--bright); }
+
+    /* Sections */
+    .section { margin-bottom: 72px; scroll-margin-top: 20px; }
+    .section-header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 20px; border-bottom: 1px solid var(--hairline); padding-bottom: 14px; }
+    .section-num { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--muted); flex-shrink: 0; }
+    .section h2 { font-size: 20px; font-weight: 500; letter-spacing: -0.01em; color: var(--bright); }
+
+    /* Cards */
+    .card { background: var(--panel); border: 1px solid var(--hairline); padding: 20px 24px; margin-bottom: 16px; }
+    .card p { color: var(--text); line-height: 1.65; margin-bottom: 12px; font-size: 15px; }
+    .card p:last-child { margin-bottom: 0; }
+    .card strong { color: var(--bright); }
+
+    /* Callouts */
+    .callout { border-left: 2px solid var(--accent); padding: 12px 16px; margin: 14px 0; font-size: 14px; color: var(--text); line-height: 1.65; max-width: 640px; }
+    .callout strong { color: var(--accent); }
+    .callout.warn { border-left-color: var(--warn); }
+    .callout.warn strong { color: var(--warn); }
+    .callout.tip  { border-left-color: var(--good); }
+    .callout.tip  strong  { color: var(--good); }
+    .callout.danger { border-left-color: var(--danger); }
+    .callout.danger strong { color: var(--danger); }
+
+    /* Tooltips */
+    [data-tip] { position: relative; border-bottom: 1px dotted var(--muted); cursor: help; }
+    [data-tip]::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--hairline); color: var(--text); font-size: 12px; line-height: 1.5; font-family: var(--sans); padding: 8px 12px; width: 240px; pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 100; text-align: left; }
+    [data-tip]:hover::after { opacity: 1; }
+
+    /* Buttons */
+    .btn { background: none; border: 1px solid var(--hairline); color: var(--text); font-family: var(--sans); font-size: 13px; padding: 7px 18px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+    .btn:hover { border-color: var(--bright); color: var(--bright); }
+    .btn.primary { border-color: var(--accent); color: var(--accent); }
+    .btn.primary:hover { background: var(--accent); color: var(--void); }
+
+    /* Mono chip */
+    .chip { font-family: var(--mono); font-size: 11px; background: var(--panel); border: 1px solid var(--hairline); padding: 3px 9px; color: var(--accent); display: inline-block; }
+
+    /* Comparison table */
+    .cmp-tbl { width: 100%; border-collapse: collapse; font-size: 13px; margin: 16px 0; max-width: 860px; }
+    .cmp-tbl th { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 10px 16px 10px 0; border-bottom: 1px solid var(--hairline); font-weight: 400; }
+    .cmp-tbl td { padding: 12px 16px 12px 0; border-bottom: 1px solid var(--hairline); color: var(--text); vertical-align: top; line-height: 1.5; }
+    .cmp-tbl tr:last-child td { border-bottom: none; }
+    .cmp-tbl tr:hover td { color: var(--bright); }
+    .good-cell { color: var(--good) !important; }
+    .bad-cell  { color: var(--danger) !important; }
+    .warn-cell { color: var(--warn) !important; }
+
+    /* Stat cards */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin: 16px 0; }
+    .stat-card { background: var(--panel); border: 1px solid var(--hairline); padding: 16px; }
+    .stat-val { font-size: 24px; font-weight: 500; letter-spacing: -0.02em; color: var(--bright); margin-bottom: 4px; }
+    .stat-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+
+    /* Sliders */
+    input[type=range] { accent-color: var(--accent); cursor: pointer; width: 100%; }
+    .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .slider-row label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); white-space: nowrap; min-width: 160px; }
+
+    /* Canvas */
+    .canvas-wrap { background: var(--panel); border: 1px solid var(--hairline); overflow: hidden; margin-bottom: 16px; }
+    canvas { display: block; width: 100%; }
+
+    /* Interactive panel */
+    .interactive { background: var(--panel); border: 1px solid var(--hairline); padding: 20px; margin-bottom: 16px; }
+    .interactive-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 16px; }
+
+    /* Bar chart rows */
+    .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .bar-label { font-family: var(--mono); font-size: 11px; color: var(--muted); min-width: 140px; text-align: right; }
+    .bar-bg { flex: 1; background: var(--void); border: 1px solid var(--hairline); height: 22px; overflow: hidden; }
+    .bar-fill { height: 100%; display: flex; align-items: center; padding-left: 8px; font-family: var(--mono); font-size: 11px; color: var(--void); transition: width 0.6s var(--ease); min-width: 0; font-weight: 500; }
+
+    /* N-gram probe display */
+    .ngram-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin: 12px 0; }
+    .ngram-card { background: var(--void); border: 1px solid var(--hairline); padding: 10px 14px; }
+    .ngram-text { font-family: var(--mono); font-size: 13px; color: var(--bright); margin-bottom: 4px; }
+    .ngram-cat  { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .ngram-bar  { margin-top: 6px; height: 2px; background: var(--hairline); }
+    .ngram-bar-fill { height: 100%; background: var(--accent); transition: width 0.5s var(--ease); }
+
+    /* Loss comparison */
+    .loss-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; font-size: 13px; }
+    .loss-label { min-width: 200px; color: var(--text); }
+    .loss-val { font-family: var(--mono); font-size: 13px; }
+
+    /* Quiz */
+    .quiz-q { font-size: 18px; font-weight: 500; color: var(--bright); margin-bottom: 16px; max-width: 640px; line-height: 1.45; letter-spacing: -0.01em; }
+    .quiz-options { display: grid; gap: 8px; margin-bottom: 14px; max-width: 640px; }
+    .quiz-opt { background: var(--panel); border: 1px solid var(--hairline); padding: 12px 16px; cursor: pointer; font-size: 14px; color: var(--text); transition: border-color 0.15s, color 0.15s; text-align: left; }
+    .quiz-opt:hover { border-color: var(--accent); color: var(--bright); }
+    .quiz-opt.correct { border-color: var(--good); color: var(--good); cursor: default; }
+    .quiz-opt.wrong   { border-color: var(--danger); color: var(--danger); cursor: default; }
+    .quiz-opt.disabled { cursor: default; pointer-events: none; }
+    .quiz-feedback { font-size: 13px; line-height: 1.65; display: none; border-left: 2px solid var(--hairline); padding: 10px 14px; color: var(--muted); max-width: 640px; }
+    .quiz-feedback.show { display: block; }
+    .quiz-feedback.ok  { border-left-color: var(--good); }
+    .quiz-feedback.bad { border-left-color: var(--danger); }
+
+    /* Footer */
+    .site-footer { margin: 64px 0 0; padding: 20px 0 40px; border-top: 1px solid var(--hairline); display: flex; justify-content: space-between; align-items: center; }
+    .site-footer .links { display: flex; gap: 28px; font-size: 14px; }
+    .site-footer .links a { display: flex; align-items: center; gap: 6px; color: var(--text); }
+    .site-footer .meta { display: flex; gap: 24px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; color: var(--muted); }
+
+    /* Animations */
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .rise { animation: rise 700ms var(--ease) both; }
+    @media (prefers-reduced-motion: reduce) { .rise { animation: none; } }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--void); }
+    ::-webkit-scrollbar-thumb { background: var(--hairline); }
+
+    @media (max-width: 720px) {
+      .rail, .rail-cap, .rail-label { left: 11px; }
+      .site-nav, .page { padding-left: 24px; padding-right: 24px; }
+      .site-footer { flex-direction: column; gap: 16px; }
+      .bar-label { min-width: 90px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="rail"></div>
+  <div class="rail-cap"></div>
+  <span class="rail-label l0">L 00</span>
+  <span class="rail-label l1">L 01</span>
+
+  <nav class="site-nav">
+    <a href="../../index.html" class="wordmark">zm / learning</a>
+    <div class="nav-links">
+      <a href="../../index.html">Index</a>
+      <a href="#" class="active">Engrams</a>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="hero rise">
+      <div class="hero-eyebrow">SemiAnalysis · Deep-Dive</div>
+      <h1>Engrams Embedding Entendre: Codesign for Efficient DRAM/SSD Offloading</h1>
+      <p>How DeepSeek's n-gram memory tables reduce HBM pressure, why offloading them to DRAM wins, and what happens to a model when you pull its memory out.</p>
+      <div class="hero-meta">
+        <div class="hero-meta-item"><span class="hero-meta-label">Published</span><span class="hero-meta-val">Sep 18, 2026</span></div>
+        <div class="hero-meta-item"><span class="hero-meta-label">Sections</span><span class="hero-meta-val">5</span></div>
+        <div class="hero-meta-item"><span class="hero-meta-label">Interactives</span><span class="hero-meta-val">4</span></div>
+        <div class="hero-meta-item"><span class="hero-meta-label">Quiz</span><span class="hero-meta-val">6 questions</span></div>
+      </div>
+      <div style="margin-bottom:6px;"><span class="hero-meta-label">Progress</span></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="sec-nav" id="sec-nav">
+      <button class="sec-btn active" data-sec="what">What is Engram?</button>
+      <button class="sec-btn" data-sec="memory">What Gets Memorized</button>
+      <button class="sec-btn" data-sec="ablation">Removing Engram</button>
+      <button class="sec-btn" data-sec="offload">DRAM vs SSD Offload</button>
+      <button class="sec-btn" data-sec="quiz">Quiz</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 1 — What is Engram?
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section" id="what">
+      <div class="section-header">
+        <span class="section-num">Section 01</span>
+        <h2>What is an Engram?</h2>
+      </div>
+      <div class="card">
+        <p>A standard <span data-tip="Mixture of Experts — a model architecture where only a subset of parameters (the 'experts') are active for each token, enabling massive total parameter counts at modest per-token FLOP cost.">MoE</span> transformer processes each token in one direction: embed the token ID into a vector, run it through attention and feed-forward layers, predict the next token. Every piece of context must be reconstructed from scratch on each forward pass.</p>
+        <p>Engram adds a parallel lookup path. Before any layer runs, it searches a large learned table for <strong>n-gram keys</strong> — short sequences of recent token IDs. When a matching key is found, it retrieves pre-computed embedding vectors directly from the table, bypassing some of the attention and feed-forward computation needed to reconstruct that context.</p>
+        <p>The intuition: if the model has seen <code>"Wright : Ace Attorney"</code> ten million times in training data, there is no reason to recompute what those tokens mean together on every inference. The Engram table memoises the result. Recurring multi-token patterns are retrieved; novel combinations still go through full computation.</p>
+      </div>
+      <div class="callout">
+        <strong>Why this matters for hardware:</strong> the Engram table in DeepSeek-V4.1-Flash weighs ~189 GiB. That is memory which, in a standard model, would have to live in <span data-tip="High Bandwidth Memory — the fast, expensive DRAM stacked directly on top of or next to the GPU die. Bandwidth is typically 3–7 TB/s but capacity is small (80–192 GB per chip).">HBM</span>. Engram's lookup pattern — a small number of rows addressed by token ID, independent of hidden state — makes it uniquely suitable for offloading to cheaper memory without stalling compute.
+      </div>
+
+      <!-- Interactive: n-gram lookup vs full attention -->
+      <div class="interactive">
+        <div class="interactive-label">N-gram table lookup vs attention: what each mechanism costs</div>
+        <div class="slider-row">
+          <label>N-gram match rate (%)</label>
+          <input type="range" id="matchSlider" min="0" max="100" value="40" step="5">
+          <div class="chip" id="matchVal">40%</div>
+        </div>
+        <canvas id="costCanvas" height="200"></canvas>
+        <div id="costVerdict" style="margin-top:12px;font-size:13px;color:var(--muted);line-height:1.6;"></div>
+      </div>
+
+      <div class="card">
+        <div style="font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:14px;">Engram in DeepSeek-V4.1-Flash — key numbers</div>
+        <table class="cmp-tbl">
+          <thead><tr><th>Property</th><th>Value</th><th>Implication</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Table size</strong></td><td>~189 GiB</td><td>Doesn't fit in a single H100/B200 HBM chip — must be split or offloaded.</td></tr>
+            <tr><td><strong>Rows retrieved per token</strong></td><td>24 rows across 2 Engram layers</td><td>~12.4 KiB per token position across the full model.</td></tr>
+            <tr><td><strong>Row addressing</strong></td><td>Token ID, not hidden state</td><td>Known before any layer runs → prefetch possible from DRAM.</td></tr>
+            <tr><td><strong>Per-GPU footprint at TP4</strong></td><td>~3.1 KiB per token</td><td>Fetch is small; the cost is latency if table is cold.</td></tr>
+            <tr><td><strong>Table location in baseline</strong></td><td>HBM</td><td>Competes with KV cache for the most expensive memory tier.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout tip">
+        <strong>The codesign insight:</strong> because addresses depend only on token IDs — not on the hidden state — the runtime can <em>prefetch</em> Engram rows from host DRAM while the preceding GPU layers are still computing. The memory access and the compute overlap. This is what makes DRAM offloading viable without stalling the pipeline.
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 2 — What Gets Memorized
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section" id="memory">
+      <div class="section-header">
+        <span class="section-num">Section 02</span>
+        <h2>What Gets Memorized?</h2>
+      </div>
+      <div class="card">
+        <p>SemiAnalysis probed Engram's gate scores in DeepSeek-V4.1-Flash to find which n-grams the model relies on most. The results are a window into how the training objective shapes memory allocation.</p>
+        <p>The model does not selectively memorise "important" facts — it memorises <strong>whatever reduces prediction loss</strong>. Licenses, bibliography fragments, API scaffolding, and boilerplate web furniture appear heavily because they provide cheap prediction shortcuts: given <code>MIT License</code>, the next tokens are almost entirely determined.</p>
+        <p>Strong gate scores do not mean those rows are <em>cache-hot</em> at inference time. And low gate scores don't mean the rows are free to skip: computing the gate itself requires retrieving the key first, so a "skip" optimisation would need a separate usefulness predictor ahead of retrieval — a significant open research problem.</p>
+      </div>
+
+      <div class="callout warn">
+        <strong>Important caveat:</strong> the gate scan uses the evaluation corpus, not training data. Finding a high-gate n-gram on the eval set proves the model <em>uses</em> that pattern, but does not establish that it was trained on it, nor how much table capacity it occupies. The categories below are illustrative, not a capacity breakdown.
+      </div>
+
+      <!-- Interactive: n-gram probe explorer -->
+      <div class="interactive">
+        <div class="interactive-label">Engram gate score explorer — what DeepSeek-V4.1-Flash memorised</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="catFilters">
+          <button class="btn primary" data-cat="all">All</button>
+          <button class="btn" data-cat="names">Names / Proper Nouns</button>
+          <button class="btn" data-cat="code">Code Fragments</button>
+          <button class="btn" data-cat="legal">Legal / License</button>
+          <button class="btn" data-cat="relational">Relational Phrases</button>
+          <button class="btn" data-cat="web">Web Boilerplate</button>
+        </div>
+        <div class="ngram-grid" id="ngramGrid"></div>
+        <div style="margin-top:12px;font-size:13px;color:var(--muted);line-height:1.6;">
+          Gate strength reflects prediction shortcut value — not factual importance or semantic richness. High gates on boilerplate outcompete culturally significant but lower-frequency n-grams.
+        </div>
+      </div>
+
+      <div class="card">
+        <p><strong>What this tells us about future Engram capacity:</strong> the value of a larger table depends heavily on what survives data preparation. If tokenization changes compress common boilerplate into single tokens, those table entries become worthless. Conversely, longer context windows or new domains introduce novel n-gram patterns the model has not yet memorised.</p>
+        <p>Engram is not a factual knowledge store — it is a pattern cache optimised by the training loss, which doesn't distinguish between "trivia worth knowing" and "filler worth predicting cheaply."</p>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 3 — Removing Engram
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section" id="ablation">
+      <div class="section-header">
+        <span class="section-num">Section 03</span>
+        <h2>What Happens When You Remove Engram?</h2>
+      </div>
+      <div class="card">
+        <p>The naive assumption is that Engram is a clean plug-in: memory on one side, reasoning on the other. Remove it, and the model degrades only on fact recall while reasoning stays intact. SemiAnalysis's ablations show the opposite.</p>
+        <p>Engram is woven into the model's computation graph. Its outputs change the hidden representations flowing into downstream expert routing. <strong>Removing it doesn't just cost you the lookup value — it changes which experts fire.</strong></p>
+        <p>When SemiAnalysis forced the ablated model to use the expert selections from the Engram-on forward pass, performance got <em>worse</em>: 0.3375 bits/token vs 0.3093 for the clean ablation. The experts and the memory table have co-adapted during training. They are not independent modules.</p>
+      </div>
+
+      <div class="callout danger">
+        <strong>Training–inference mismatch:</strong> DeepSeek's original paper ablated a model that was <em>trained with</em> Engram but ran <em>inference without</em> it. That measures the model's dependency on a feature it was optimised to use — not the performance of a model that never had the feature. The two numbers are very different.
+      </div>
+
+      <!-- Interactive: ablation loss explorer -->
+      <div class="interactive">
+        <div class="interactive-label">CRUXEval — answer loss under different Engram ablation conditions</div>
+        <div class="slider-row">
+          <label>Ablation scenario</label>
+          <input type="range" id="ablationSlider" min="0" max="3" value="0" step="1">
+          <div class="chip" id="ablationLabel">Engram On (baseline)</div>
+        </div>
+        <canvas id="ablationCanvas" height="240"></canvas>
+        <div id="ablationVerdict" style="margin-top:12px;font-size:13px;color:var(--muted);line-height:1.6;"></div>
+      </div>
+
+      <div class="card">
+        <div style="font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:14px;">CRUXEval accuracy — Engram presence by phase</div>
+        <table class="cmp-tbl">
+          <thead><tr><th>Scenario</th><th>Accuracy impact</th><th>Generated tokens</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Engram on throughout</strong></td><td class="good-cell">Baseline</td><td>Baseline</td></tr>
+            <tr><td>Engram off during <em>decode</em> only</td><td class="warn-cell">Reduced</td><td>Increased</td></tr>
+            <tr><td>Engram off during <em>prefill</em> only</td><td class="warn-cell">Reduced (more than decode)</td><td>Increased</td></tr>
+            <tr><td>Engram off throughout</td><td class="bad-cell">Largest reduction</td><td>Largest increase</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted);">Keeping Engram for prefill alone outperforms keeping it only for decode, likely because richer prefill hidden states produce a semantically denser KV cache that decode workers can use even without Engram on their side.</p>
+      </div>
+
+      <div class="callout">
+        <strong>The takeaway:</strong> "memory stores facts, experts reason" is a clean division that doesn't hold empirically. Rerouting partially compensates for missing memory, but the compensation is lossy — the model was never trained to reason <em>without</em> its memory table in place.
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 4 — DRAM vs SSD Offload
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section" id="offload">
+      <div class="section-header">
+        <span class="section-num">Section 04</span>
+        <h2>DRAM vs SSD Offload — Where the Engram Table Lives</h2>
+      </div>
+      <div class="card">
+        <p>The 189 GiB Engram table does not need to live in HBM. Its lookup addresses are token IDs — known before any layer computes — which means the fetch can be initiated while the GPU processes earlier layers. This prefetch window is what makes lower-tier memory viable.</p>
+        <p>SemiAnalysis tested three configurations on B200: <strong>HBM</strong> (baseline), <strong>pinned DRAM</strong> via Unified Virtual Addressing, and <strong>NVMe SSD</strong> via a memory-mapped file. The DRAM approach uses a GPU kernel that reads host memory directly through UVA, with async prefetch overlapping the fetch with preceding GPU work.</p>
+        <p>The surprising result: on B300 and week-0 stack, moving the Engram table <em>back</em> into HBM delivered no improvement and stayed within run-to-run variance. The optimised DRAM path is that good.</p>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--accent);">189 GiB</div>
+          <div class="stat-label">Engram table size in DeepSeek-V4.1-Flash</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--good);">1.6×</div>
+          <div class="stat-label">Pareto improvement on B300 switching TP4→TP2 with DRAM offload</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--warn);">2.3×</div>
+          <div class="stat-label">More tokens/$ for DRAM vs SSD near 125 tok/s/user on B200</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--danger);">≈0</div>
+          <div class="stat-label">HBM vs DRAM gain on B300 — DRAM offload matches HBM</div>
+        </div>
+      </div>
+
+      <!-- Interactive: offload performance comparison -->
+      <div class="interactive">
+        <div class="interactive-label">Tokens per dollar vs P90 interactivity — offload tier comparison (B200)</div>
+        <div class="slider-row">
+          <label>P90 tok/s/user target</label>
+          <input type="range" id="offloadSlider" min="20" max="200" value="80" step="10">
+          <div class="chip" id="offloadVal">80 tok/s/user</div>
+        </div>
+        <div id="offloadBars" style="margin-top:8px;"></div>
+        <div id="offloadVerdict" style="margin-top:14px;font-size:13px;color:var(--muted);line-height:1.6;"></div>
+      </div>
+
+      <div class="callout warn">
+        <strong>Why SSD costs more than you think:</strong> even with the Engram table fully cached in OS page cache (no physical SSD reads), the SSD path is slower than pinned DRAM. The bottleneck is not storage bandwidth — it's the CPU round-trip: copy row IDs to CPU, deduplicate, gather rows into pinned buffers, copy back to GPU, dequantize. UVA eliminates this round-trip entirely. A warm page cache still pays for coordination.
+      </div>
+
+      <div class="card">
+        <p><strong>The TP reduction trick:</strong> offloading Engram to DRAM frees HBM capacity that was previously holding the table. That freed capacity allows a smaller tensor parallelism group — for example, B300 can switch from TP4 to TP2. Fewer GPUs per replica means less all-reduce communication per forward pass, which directly improves the throughput/latency Pareto by up to 1.6×. This is the hidden dividend of offloading: not just cheaper memory, but less coordination overhead.</p>
+        <p><strong>HBM bandwidth vs capacity:</strong> with Engram offloaded, what matters for performance is no longer how much HBM you have, but how fast it is. 4-hi HBM stacks provide the best bandwidth-per-dollar. Model architecture innovations that reduce HBM capacity requirements could, at the limit, push toward 0-hi stacks — less memory physically stacked, all inference value coming from bandwidth.</p>
+      </div>
+
+      <div class="callout tip">
+        <strong>Production verdict:</strong> SSD offloading is not currently worth the trade. Every measured SSD point on B200 has a DRAM alternative with higher P90 interactivity and more tokens per dollar. The SSD path might become viable with GDS (GPU Direct Storage), larger Engram tables that exceed available DRAM, or dedicated inference hardware designed around the access pattern — but none of those conditions exist today.
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 5 — Quiz
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section" id="quiz">
+      <div class="section-header">
+        <span class="section-num">Knowledge Check</span>
+        <h2>Test Your Understanding</h2>
+      </div>
+      <div id="quizMount"></div>
+    </div>
+
+    <footer class="site-footer">
+      <div class="links">
+        <a href="../../index.html">← All Resources</a>
+        <a href="https://newsletter.semianalysis.com/p/engrams-embedding-entendre-codesign" target="_blank" rel="noopener">Source ↗</a>
+      </div>
+      <div class="meta">
+        <span>ENGRAMS · DRAM OFFLOADING</span>
+        <span>MEMORY · ABLATION · INFERENCE</span>
+      </div>
+    </footer>
+  </div>
+
+<script>
+// ── Utils ──────────────────────────────────────────────────────────────────
+const qs  = (s, r = document) => r.querySelector(s);
+const qsa = (s, r = document) => [...r.querySelectorAll(s)];
+
+// ── Progress ──────────────────────────────────────────────────────────────
+const SECTION_IDS = ['what','memory','ablation','offload','quiz'];
+const visited = new Set();
+function markVisited(id) {
+  visited.add(id);
+  const pct = Math.round((visited.size / SECTION_IDS.length) * 100);
+  qs('#progress-fill').style.width = pct + '%';
+}
+const sectionObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting && e.target.id) {
+      markVisited(e.target.id);
+      qsa('.sec-btn').forEach(b => b.classList.remove('active'));
+      const btn = qs(`[data-sec="${e.target.id}"]`);
+      if (btn) btn.classList.add('active');
+    }
+  });
+}, { threshold: 0.15 });
+SECTION_IDS.forEach(id => { const el = qs('#' + id); if (el) sectionObserver.observe(el); });
+qsa('.sec-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = qs('#' + btn.dataset.sec);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+// ── SECTION 1: N-gram lookup cost canvas ──────────────────────────────────
+(function() {
+  function draw() {
+    const matchPct = parseInt(qs('#matchSlider').value);
+    qs('#matchVal').textContent = matchPct + '%';
+    const canvas = qs('#costCanvas');
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.offsetWidth; const H = 200;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, W, H);
+
+    const pad = { l: 60, r: 20, t: 20, b: 40 };
+    const W2 = W - pad.l - pad.r; const H2 = H - pad.t - pad.b;
+
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
+    [0, 25, 50, 75, 100].forEach(v => {
+      const y = pad.t + H2 - (v / 100) * H2;
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
+      ctx.fillStyle = '#7C848D'; ctx.font = '10px Hanken Grotesk, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(v + '%', pad.l - 6, y + 4);
+    });
+
+    // X axis labels
+    ctx.fillStyle = '#7C848D'; ctx.font = '10px Hanken Grotesk, sans-serif';
+    ctx.textAlign = 'center';
+    ['Full attn\n(0% match)', 'Hybrid', 'Full lookup\n(100% match)'].forEach((label, i) => {
+      const x = pad.l + (i / 2) * W2;
+      label.split('\n').forEach((line, li) => ctx.fillText(line, x, H - pad.b + 14 + li * 12));
+    });
+
+    // Relative compute cost line (scales down with match rate)
+    const matchFrac = matchPct / 100;
+    const computeCost = Math.round(100 - matchFrac * 55); // lookup ~45% cheaper per matched token
+    const memCost    = Math.round(10 + matchFrac * 20);   // memory read cost grows with table access
+    const totalCost  = Math.round(computeCost * 0.8 + memCost * 0.2);
+
+    // Draw bars at current match rate
+    const barW = 60;
+    const bars = [
+      { label: 'Compute', val: computeCost, color: '#7AA2F7' },
+      { label: 'Memory',  val: memCost,     color: '#E0AF68' },
+      { label: 'Total',   val: totalCost,   color: '#9ECE6A' },
+    ];
+    bars.forEach((b, i) => {
+      const x = pad.l + (W2 / 4) + i * (W2 / 3);
+      const barH = (b.val / 100) * H2;
+      const y = pad.t + H2 - barH;
+      ctx.fillStyle = b.color + '33';
+      ctx.fillRect(x - barW / 2, y, barW, barH);
+      ctx.strokeStyle = b.color; ctx.lineWidth = 1;
+      ctx.strokeRect(x - barW / 2, y, barW, barH);
+      ctx.fillStyle = b.color; ctx.font = '11px JetBrains Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(b.val + '%', x, y - 4);
+      ctx.fillStyle = '#7C848D'; ctx.font = '10px Hanken Grotesk, sans-serif';
+      ctx.fillText(b.label, x, H - pad.b + 14);
+    });
+
+    qs('#costVerdict').innerHTML =
+      `At <span style="color:var(--bright);font-weight:500">${matchPct}% n-gram match rate</span>: ` +
+      `compute cost drops to ~<span style="color:var(--accent)">${computeCost}%</span> of baseline (attention skipped for matched tokens), ` +
+      `but memory read cost rises to ~<span style="color:var(--warn)">${memCost}%</span> as more table rows are fetched. ` +
+      `Total cost: ~<span style="color:var(--good)">${totalCost}%</span> of full-attention baseline.`;
+  }
+  qs('#matchSlider').addEventListener('input', draw);
+  draw(); window.addEventListener('resize', draw);
+})();
+
+// ── SECTION 2: N-gram probe grid ──────────────────────────────────────────
+(function() {
+  const NGRAMS = [
+    // names
+    { text: '"Wright : Ace"',          cat: 'names',     gate: 0.94 },
+    { text: '"Linus Torvalds"',         cat: 'names',     gate: 0.87 },
+    { text: '"Barack Obama"',           cat: 'names',     gate: 0.82 },
+    { text: '"Taylor Swift"',           cat: 'names',     gate: 0.78 },
+    // code
+    { text: '"import numpy as"',        cat: 'code',      gate: 0.97 },
+    { text: '"def __init__(self"',      cat: 'code',      gate: 0.95 },
+    { text: '"return None"',            cat: 'code',      gate: 0.89 },
+    { text: '"async def main"',         cat: 'code',      gate: 0.85 },
+    { text: '"git commit -m"',          cat: 'code',      gate: 0.76 },
+    // legal
+    { text: '"MIT License"',            cat: 'legal',     gate: 0.99 },
+    { text: '"Apache License 2.0"',     cat: 'legal',     gate: 0.97 },
+    { text: '"All rights reserved"',    cat: 'legal',     gate: 0.96 },
+    { text: '"WITHOUT WARRANTY"',       cat: 'legal',     gate: 0.93 },
+    // relational
+    { text: '"is defined as"',          cat: 'relational', gate: 0.71 },
+    { text: '"according to"',           cat: 'relational', gate: 0.68 },
+    { text: '"in contrast to"',         cat: 'relational', gate: 0.65 },
+    { text: '"as a result of"',         cat: 'relational', gate: 0.61 },
+    // web
+    { text: '"Privacy Policy"',         cat: 'web',       gate: 0.98 },
+    { text: '"Terms of Service"',       cat: 'web',       gate: 0.97 },
+    { text: '"Cookie Settings"',        cat: 'web',       gate: 0.91 },
+    { text: '"Subscribe to newsletter"',cat: 'web',       gate: 0.88 },
+  ];
+
+  const CAT_COLORS = {
+    names: '#7AA2F7',
+    code: '#9ECE6A',
+    legal: '#F7768E',
+    relational: '#E0AF68',
+    web: '#BB9AF7',
+  };
+
+  function render(filter) {
+    const grid = qs('#ngramGrid');
+    grid.innerHTML = '';
+    const items = filter === 'all' ? NGRAMS : NGRAMS.filter(n => n.cat === filter);
+    items.forEach(ng => {
+      const div = document.createElement('div');
+      div.className = 'ngram-card';
+      div.innerHTML = `
+        <div class="ngram-text">${ng.text}</div>
+        <div class="ngram-cat" style="color:${CAT_COLORS[ng.cat]}">${ng.cat}</div>
+        <div class="ngram-bar"><div class="ngram-bar-fill" style="width:0%;background:${CAT_COLORS[ng.cat]}"></div></div>
+      `;
+      grid.appendChild(div);
+      setTimeout(() => div.querySelector('.ngram-bar-fill').style.width = Math.round(ng.gate * 100) + '%', 30);
+    });
+  }
+
+  qsa('[data-cat]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      qsa('[data-cat]').forEach(b => { b.classList.remove('primary'); b.classList.add('btn'); });
+      btn.classList.add('primary');
+      render(btn.dataset.cat);
+    });
+  });
+
+  render('all');
+})();
+
+// ── SECTION 3: Ablation loss canvas ───────────────────────────────────────
+(function() {
+  const SCENARIOS = [
+    { label: 'Engram On (baseline)',           loss: 0.2848, color: '#9ECE6A' },
+    { label: 'Engram Off (ablated)',            loss: 0.3093, color: '#E0AF68' },
+    { label: 'Ablated + original expert routes',loss: 0.3375, color: '#F7768E' },
+    { label: 'Full attention (no Engram, retrained)', loss: 0.2920, color: '#BB9AF7' },
+  ];
+  const LABELS = [
+    'Engram On\n(baseline)',
+    'Engram Off\n(ablated)',
+    'Ablated +\norig routes',
+    'Retrained\nno Engram',
+  ];
+
+  function draw() {
+    const idx = parseInt(qs('#ablationSlider').value);
+    qs('#ablationLabel').textContent = SCENARIOS[idx].label;
+    const canvas = qs('#ablationCanvas');
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.offsetWidth; const H = 240;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, W, H);
+
+    const pad = { l: 60, r: 20, t: 20, b: 50 };
+    const W2 = W - pad.l - pad.r; const H2 = H - pad.t - pad.b;
+
+    const minLoss = 0.26; const maxLoss = 0.36;
+    const toLossY = v => pad.t + H2 - ((v - minLoss) / (maxLoss - minLoss)) * H2;
+
+    // Grid lines
+    [0.27, 0.28, 0.29, 0.30, 0.31, 0.32, 0.33, 0.34, 0.35].forEach(v => {
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(pad.l, toLossY(v)); ctx.lineTo(W - pad.r, toLossY(v)); ctx.stroke();
+      ctx.fillStyle = '#7C848D'; ctx.font = '9px JetBrains Mono, monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(v.toFixed(2), pad.l - 4, toLossY(v) + 3);
+    });
+
+    // Y axis label
+    ctx.save();
+    ctx.translate(12, pad.t + H2 / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = '#7C848D'; ctx.font = '10px Hanken Grotesk, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('bits/token (lower = better)', 0, 0);
+    ctx.restore();
+
+    const barW = Math.min(56, (W2 / SCENARIOS.length) * 0.55);
+    const spacing = W2 / SCENARIOS.length;
+
+    SCENARIOS.forEach((s, i) => {
+      const x = pad.l + spacing * i + spacing / 2;
+      const y = toLossY(s.loss);
+      const barH = toLossY(minLoss) - y;
+      const isActive = i === idx;
+      const alpha = isActive ? 'CC' : '33';
+
+      ctx.fillStyle = s.color + alpha;
+      ctx.fillRect(x - barW / 2, y, barW, barH);
+      if (isActive) {
+        ctx.strokeStyle = s.color; ctx.lineWidth = 1.5;
+        ctx.strokeRect(x - barW / 2, y, barW, barH);
+      }
+
+      ctx.fillStyle = isActive ? s.color : '#7C848D';
+      ctx.font = isActive ? 'bold 11px JetBrains Mono, monospace' : '11px JetBrains Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(s.loss.toFixed(4), x, y - 6);
+
+      // X labels
+      ctx.fillStyle = isActive ? '#E8EBED' : '#7C848D';
+      ctx.font = '9px Hanken Grotesk, sans-serif';
+      LABELS[i].split('\n').forEach((line, li) => {
+        ctx.fillText(line, x, H - pad.b + 14 + li * 11);
+      });
+    });
+  }
+
+  qs('#ablationSlider').addEventListener('input', () => {
+    const idx = parseInt(qs('#ablationSlider').value);
+    const s = [
+      { label: 'Engram On (baseline)',            desc: 'The model running as trained. Answer loss: 0.2848 bits/token.', color: '#9ECE6A' },
+      { label: 'Engram Off (ablated)',             desc: 'Engram table zeroed out. Loss rises to 0.3093 bits/token — a 8.6% degradation. Expert routing adapts partially, but cannot fully compensate.', color: '#E0AF68' },
+      { label: 'Ablated + original expert routes', desc: 'Forcing the ablated model to use the expert selections from the Engram-on run makes things worse, not better: 0.3375 bits/token. The experts and memory are co-adapted — expert routes without their memory inputs are actively harmful.', color: '#F7768E' },
+      { label: 'Retrained (no Engram)',            desc: 'A model trained from scratch without Engram settles near 0.2920 bits/token — slightly worse than Engram-on, but far better than inference-time ablation. The right comparison for capability questions is this line, not the ablation.', color: '#BB9AF7' },
+    ][idx];
+    qs('#ablationVerdict').innerHTML = `<strong style="color:${s.color}">${s.label}:</strong> ${s.desc}`;
+    draw();
+  });
+  qs('#ablationSlider').dispatchEvent(new Event('input'));
+  window.addEventListener('resize', draw);
+})();
+
+// ── SECTION 4: Offload performance bars ───────────────────────────────────
+(function() {
+  // Approximate M tok/$  at varying P90 interactivity targets (B200 data)
+  // DRAM flat or slightly declining; SSD drops faster; HBM ≈ DRAM on B300 but shown separately
+  function getTokPerDollar(tier, tps) {
+    if (tier === 'HBM (B200)') {
+      return tps <= 100 ? 130 - tps * 0.3 : Math.max(10, 130 - tps * 0.6);
+    }
+    if (tier === 'DRAM/UVA (B200)') {
+      return tps <= 125 ? 121 - (tps - 80) * 0.5 : Math.max(15, 121 - (tps - 80) * 0.8);
+    }
+    if (tier === 'SSD warm cache (B200)') {
+      return tps <= 100 ? 52 - (tps - 80) * 0.4 : Math.max(5, 52 - (tps - 80) * 0.9);
+    }
+    if (tier === 'SSD cold (B200)') {
+      return tps <= 80 ? 28 - (tps - 60) * 0.3 : Math.max(2, 28 - (tps - 60) * 0.7);
+    }
+    return 0;
+  }
+
+  const TIERS = ['HBM (B200)', 'DRAM/UVA (B200)', 'SSD warm cache (B200)', 'SSD cold (B200)'];
+  const TIER_COLORS = {
+    'HBM (B200)':          '#BB9AF7',
+    'DRAM/UVA (B200)':     '#7AA2F7',
+    'SSD warm cache (B200)': '#E0AF68',
+    'SSD cold (B200)':     '#F7768E',
+  };
+
+  function update() {
+    const tps = parseInt(qs('#offloadSlider').value);
+    qs('#offloadVal').textContent = tps + ' tok/s/user';
+    const scores = TIERS.map(t => ({ t, v: getTokPerDollar(t, tps) }));
+    const maxV = Math.max(...scores.map(s => s.v));
+    const barsEl = qs('#offloadBars');
+    barsEl.innerHTML = '';
+    scores.forEach(({ t, v }) => {
+      const pct = maxV > 0 ? Math.min(100, Math.round((v / maxV) * 100)) : 0;
+      const row = document.createElement('div');
+      row.className = 'bar-row';
+      row.innerHTML = `
+        <div class="bar-label">${t}</div>
+        <div class="bar-bg"><div class="bar-fill" style="background:${TIER_COLORS[t]};width:0%">${v.toFixed(0)}M</div></div>`;
+      barsEl.appendChild(row);
+      setTimeout(() => row.querySelector('.bar-fill').style.width = pct + '%', 30);
+    });
+    const dram = getTokPerDollar('DRAM/UVA (B200)', tps);
+    const ssd  = getTokPerDollar('SSD warm cache (B200)', tps);
+    const ratio = ssd > 0 ? (dram / ssd).toFixed(1) : '—';
+    qs('#offloadVerdict').innerHTML =
+      `At <strong>${tps} tok/s/user</strong> P90 target: DRAM/UVA delivers ` +
+      `<strong style="color:var(--accent)">${dram.toFixed(0)}M total tokens per dollar</strong>, ` +
+      `vs ${ssd.toFixed(0)}M for SSD warm-cache — a <strong style="color:var(--accent)">${ratio}×</strong> advantage. ` +
+      `Every SSD point has a DRAM alternative that is better on both axes.`;
+  }
+  qs('#offloadSlider').addEventListener('input', update);
+  update();
+})();
+
+// ── Quiz ──────────────────────────────────────────────────────────────────
+const QUIZ = [
+  {
+    q: "Why can Engram rows be prefetched from DRAM before any GPU layer runs?",
+    opts: [
+      "The model caches the most common rows in L2 after the first request.",
+      "Row addresses are determined by token IDs alone — known before hidden states are computed.",
+      "DRAM bandwidth is high enough that prefetch isn't necessary; reads are just fast.",
+      "NVIDIA's UVA hardware prefetches any host memory access automatically.",
+    ],
+    correct: 1,
+    feedback: "This is the architectural property that makes DRAM offloading viable. Standard weight reads depend on which experts are selected, which depends on the hidden state — which isn't known until the preceding layers run. Engram rows are indexed purely by token IDs, so the fetch address is determined at the start of the forward pass, before any compute begins. The runtime can initiate the DRAM read while earlier GPU layers execute, hiding the latency."
+  },
+  {
+    q: "SemiAnalysis forced an ablated model (Engram off) to use the expert routing decisions from the Engram-on forward pass. What happened?",
+    opts: [
+      "Performance was identical — expert routing captures most of what Engram does.",
+      "Performance improved slightly, confirming experts and memory are independent.",
+      "Performance was worse than a clean ablation — experts co-adapted to Engram and are harmful without it.",
+      "The forced routing caused a runtime error because expert indices were out of range.",
+    ],
+    correct: 2,
+    feedback: "Loss rose to 0.3375 bits/token vs 0.3093 for the clean ablation. The result reveals that experts and memory co-adapted during training. Expert routing decisions are optimised assuming the Engram context is present. Strip out the memory but keep the routing and you get decisions calibrated for a different computational context — which is actively worse than letting the model reroute on its own."
+  },
+  {
+    q: "What does the gate scan of DeepSeek-V4.1-Flash tell us about which n-grams Engram memorises?",
+    opts: [
+      "It prioritises factually important statements because those reduce downstream hallucination.",
+      "It memorises patterns that minimise training loss — boilerplate, licenses, and code scaffolding score highly regardless of semantic importance.",
+      "It memorises only the n-grams seen more than 10 million times in training data.",
+      "It memorises factual associations from Wikipedia, leaving code and legal text to the MoE experts.",
+    ],
+    correct: 1,
+    feedback: "The training objective optimises prediction loss, not semantic richness. Licenses, bibliography fragments, API scaffolding, and web furniture provide strong prediction shortcuts — given 'MIT License', the next tokens are nearly determined. High gate scores on culturally trivial boilerplate do not represent wasted capacity from the model's perspective: they are exactly what reduces loss cheapest."
+  },
+  {
+    q: "On B300 hardware with optimised DRAM offloading, moving the Engram table back into HBM produced what result?",
+    opts: [
+      "A 1.6× throughput improvement due to lower access latency.",
+      "No improvement — performance stayed within run-to-run variance.",
+      "A 15% regression because the HBM path lacks the async prefetch overlap.",
+      "A 2× improvement only at high batch sizes where DRAM bandwidth saturated.",
+    ],
+    correct: 1,
+    feedback: "On B300 and week-0 stack, HBM vs DRAM for the Engram table produced no measurable difference. The async prefetch path in the optimised DRAM implementation overlaps the memory fetch with preceding GPU layers so completely that the HBM latency advantage vanishes. This is the strongest evidence that the DRAM offload approach is production-ready."
+  },
+  {
+    q: "How does DRAM offloading enable the TP4→TP2 reduction on B300, and why does that improve performance?",
+    opts: [
+      "Fewer GPUs means less inter-GPU communication overhead per forward pass, improving the throughput/latency Pareto by up to 1.6×.",
+      "TP2 activates a different expert routing path that is faster.",
+      "The Engram table must be replicated across all TP ranks — fewer ranks means smaller total table footprint.",
+      "TP2 uses FP8 precision while TP4 is forced to BF16 for numerical stability.",
+    ],
+    correct: 0,
+    feedback: "Offloading frees ~189 GiB of HBM from storing the Engram table. That reclaimed capacity means each GPU in a replica needs less memory, so a smaller tensor parallelism group — TP2 instead of TP4 — can hold the remaining weights. TP2 requires fewer all-reduce operations per forward pass (2 GPUs communicating vs 4), which reduces synchronisation latency and directly improves the throughput/latency curve."
+  },
+  {
+    q: "Why is SSD offloading worse than DRAM even when the Engram table is fully resident in the OS page cache (no physical disk reads)?",
+    opts: [
+      "The OS page cache doesn't support the required access alignment for GPU DMA.",
+      "The filesystem driver introduces a fixed per-read overhead that exceeds DRAM latency.",
+      "The current path requires a CPU round-trip: copy IDs to CPU, gather rows, copy to GPU, dequantize — UVA eliminates this entirely.",
+      "NUMA topology means page-cached memory is always on the wrong NUMA node from the GPU.",
+    ],
+    correct: 2,
+    feedback: "Even with physical SSD reads eliminated, the unoptimised SSD path runs through the CPU: row IDs are copied to the CPU, deduplicated, used to gather table rows into pinned host buffers, then copied back to the GPU for dequantization. Native UVA performs row selection and dequantization directly on the GPU, avoiding the round-trip entirely. A warm page cache reduces storage latency to near-zero but does not eliminate the coordination overhead — which is why warm-cache SSD still loses to DRAM."
+  },
+];
+
+(function() {
+  const mount = qs('#quizMount');
+  QUIZ.forEach((q, qi) => {
+    const wrap = document.createElement('div');
+    wrap.style.marginBottom = '40px';
+    const qEl = document.createElement('div'); qEl.className = 'quiz-q';
+    qEl.textContent = `${qi + 1}. ${q.q}`;
+    wrap.appendChild(qEl);
+
+    const opts = document.createElement('div'); opts.className = 'quiz-options';
+    const fb = document.createElement('div'); fb.className = 'quiz-feedback';
+    fb.textContent = q.feedback;
+
+    q.opts.forEach((opt, oi) => {
+      const btn = document.createElement('button'); btn.className = 'quiz-opt';
+      btn.textContent = opt;
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('disabled')) return;
+        qsa('.quiz-opt', opts).forEach(b => b.classList.add('disabled'));
+        if (oi === q.correct) {
+          btn.classList.add('correct');
+          fb.classList.add('show', 'ok');
+        } else {
+          btn.classList.add('wrong');
+          qsa('.quiz-opt', opts)[q.correct].classList.add('correct');
+          fb.classList.add('show', 'bad');
+        }
+      });
+      opts.appendChild(btn);
+    });
+    wrap.appendChild(opts);
+    wrap.appendChild(fb);
+    mount.appendChild(wrap);
+  });
+})();
+</script>
+</body>
+</html>

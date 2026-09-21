@@ -39,6 +39,52 @@
   header.hero .sub .label { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #7C848D; }
   header.hero .sub .val { font-size: 14px; color: #C9CDD2; }
 
+  /* ── Source tabs ── */
+  .tabs-bar {
+    display: flex; align-items: center; gap: 0;
+    border-bottom: 1px solid #1E2227;
+    margin-top: 36px;
+  }
+  .tab-btn {
+    background: none; border: none; cursor: pointer;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: #7C848D; padding: 10px 18px 10px 0;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .tab-btn:hover { color: #C9CDD2; }
+  .tab-btn.active { color: #E8EBED; border-bottom-color: #E8EBED; }
+  .tab-btn .dot { width: 5px; height: 5px; flex-shrink: 0; }
+  .tab-btn.bbg .dot { background: #7AA2F7; }
+  .tab-btn.semi .dot { background: #9ECE6A; }
+
+  /* ── Email subtabs ── */
+  .subtabs-bar {
+    display: flex; align-items: center; gap: 0;
+    border-bottom: 1px solid #1E2227;
+    margin-top: 24px;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .subtabs-bar::-webkit-scrollbar { display: none; }
+  .subtab-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 13px; font-family: 'Hanken Grotesk', sans-serif;
+    color: #7C848D; padding: 8px 16px 8px 0;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .subtab-btn:hover { color: #C9CDD2; }
+  .subtab-btn.active { color: #E8EBED; border-bottom-color: #E8EBED; }
+
+  /* ── Tab panels ── */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .subtab-panel { display: none; }
+  .subtab-panel.active { display: block; }
+
   /* source group */
   .source-group { margin-top: 48px; }
   .source-label {
@@ -66,7 +112,21 @@
   .post-title { display: flex; align-items: center; gap: 8px; font-size: 20px; line-height: 1.2; font-weight: 500; letter-spacing: -0.01em; color: #E8EBED; transition: color 0.15s; }
   .post-desc { max-width: 600px; font-size: 14px; line-height: 1.45; color: #7C848D; }
   .post-tag { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #7C848D; text-align: right; }
+  .post-date { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #7C848D; }
   .arrow { opacity: 0; transition: opacity 0.15s; flex-shrink: 0; }
+
+  /* single-email detail view (inside a subtab) */
+  .email-detail { max-width: 860px; padding-top: 32px; padding-bottom: 48px; }
+  .email-detail .email-title { font-size: 24px; font-weight: 500; letter-spacing: -0.01em; color: #E8EBED; margin-bottom: 10px; }
+  .email-detail .email-meta { display: flex; gap: 16px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #7C848D; margin-bottom: 20px; }
+  .email-detail .email-desc { font-size: 15px; line-height: 1.6; color: #C9CDD2; margin-bottom: 28px; max-width: 600px; }
+  .email-detail .open-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 500; color: #E8EBED;
+    border: 1px solid #2A2F37; padding: 10px 18px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .email-detail .open-btn:hover { border-color: #4A5260; color: #FFFFFF; }
 
   footer { margin: 64px 0 0; padding: 20px 0 40px; border-top: 1px solid #1E2227; display: flex; justify-content: space-between; align-items: center; }
   footer .links { display: flex; gap: 28px; font-size: 14px; }
@@ -77,7 +137,9 @@
   .rise { animation: rise 700ms cubic-bezier(.2,.7,.2,1) both; }
   .rise-2 { animation: rise 700ms cubic-bezier(.2,.7,.2,1) 80ms both; }
   .rise-3 { animation: rise 700ms cubic-bezier(.2,.7,.2,1) 160ms both; }
-  @media (prefers-reduced-motion: reduce) { .rise, .rise-2, .rise-3 { animation: none; } }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .fade-in { animation: fade-in 200ms ease both; }
+  @media (prefers-reduced-motion: reduce) { .rise, .rise-2, .rise-3, .fade-in { animation: none; } }
 
   @media (max-width: 720px) {
     .rail, .rail-cap, .rail-label { left: 11px; }
@@ -109,75 +171,190 @@
     <p>Technical deep-dives from newsletters, papers, and blogs — made interactive.</p>
     <div class="sub">
       <span class="label">Resources</span>
-      <span class="val">4</span>
+      <span class="val">5</span>
       <span class="label" style="margin-left:12px;">Sources</span>
       <span class="val">2</span>
     </div>
   </header>
 
-  <!-- ByteByteGo -->
-  <div class="source-group rise-2">
-    <div class="source-label bbg">
-      <div class="dot"></div>
-      ByteByteGo
-    </div>
-    <div class="post-list">
-      <a href="bytebytego/api_concepts_every_software_engineer_should_know/index.html">
-        <span class="post-num">01</span>
-        <span class="post-body">
-          <span class="post-title">
-            API Concepts Every Software Engineer Should Know
-            <svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E8EBED" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
-          </span>
-          <span class="post-desc">HTTP methods, status codes, REST vs GraphQL vs gRPC, OAuth 2.0, JWT deep-dive, rate limiting, idempotency — with an interactive playground and quiz.</span>
-        </span>
-        <span class="post-tag">EP226</span>
-      </a>
-      <a href="bytebytego/how_llms_find_a_needle_in_a_haystack/index.html">
-        <span class="post-num">02</span>
-        <span class="post-body">
-          <span class="post-title">
-            How LLMs Find a Needle in a Haystack
-            <svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E8EBED" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
-          </span>
-          <span class="post-desc">RAG pipelines, vector search, HNSW indexing, chunking strategies, metadata filtering — with a live embedding visualiser and recall tuner.</span>
-        </span>
-        <span class="post-tag">BBG</span>
-      </a>
-    </div>
+  <!-- ── Source tabs ── -->
+  <div class="tabs-bar rise-2" role="tablist" aria-label="Email sources">
+    <button class="tab-btn active" role="tab" aria-selected="true"  data-tab="all">All</button>
+    <button class="tab-btn bbg"    role="tab" aria-selected="false" data-tab="bbg">
+      <span class="dot"></span>ByteByteGo
+    </button>
+    <button class="tab-btn semi"   role="tab" aria-selected="false" data-tab="semi">
+      <span class="dot"></span>SemiAnalysis
+    </button>
   </div>
 
-  <!-- SemiAnalysis -->
-  <div class="source-group rise-3">
-    <div class="source-label semi">
-      <div class="dot"></div>
-      SemiAnalysis
-    </div>
-    <div class="post-list">
-      <a href="semianalysis/a_brain_too_big_to_carry/index.html">
-        <span class="post-num">03</span>
-        <span class="post-body">
-          <span class="post-title">
-            A Brain Too Big to Carry
-            <svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E8EBED" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+  <!-- ══ ALL panel ══ -->
+  <div class="tab-panel active fade-in" id="panel-all">
+
+    <!-- ByteByteGo -->
+    <div class="source-group">
+      <div class="source-label bbg">
+        <div class="dot"></div>
+        ByteByteGo
+      </div>
+      <div class="post-list">
+        <a href="bytebytego/api_concepts_every_software_engineer_should_know/index.html">
+          <span class="post-num">01</span>
+          <span class="post-body">
+            <span class="post-title">
+              API Concepts Every Software Engineer Should Know
+              <svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E8EBED" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+            </span>
+            <span class="post-desc">HTTP methods, status codes, REST vs GraphQL vs gRPC, OAuth 2.0, JWT deep-dive, rate limiting, idempotency — with an interactive playground and quiz.</span>
+            <span class="post-date">Sep 19, 2026</span>
           </span>
-          <span class="post-desc">On-device vs datacenter inference for robot AI — latency budgets, silicon economics, the network wall, and TCO tradeoffs at fleet scale.</span>
-        </span>
-        <span class="post-tag">SA</span>
-      </a>
-      <a href="semianalysis/vera_rubin_nvl72_agentic_inference/index.html">
-        <span class="post-num">04</span>
-        <span class="post-body">
-          <span class="post-title">
-            Vera Rubin NVL72 Agentic Inference
-            <svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E8EBED" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+          <span class="post-tag">EP226</span>
+        </a>
+        <a href="bytebytego/how_llms_find_a_needle_in_a_haystack/index.html">
+          <span class="post-num">02</span>
+          <span class="post-body">
+            <span class="post-title">
+              How LLMs Find a Needle in a Haystack
+              <svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E8EBED" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+            </span>
+            <span class="post-desc">RAG pipelines, vector search, HNSW indexing, chunking strategies, metadata filtering — with a live embedding visualiser and recall tuner.</span>
+            <span class="post-date">Sep 16, 2026</span>
           </span>
-          <span class="post-desc">67× better performance per dollar on agentic workloads, Jensen sandbagging again, revenue per gigawatt, and why the more you buy the more you earn.</span>
-        </span>
-        <span class="post-tag">SA</span>
-      </a>
+          <span class="post-tag">BBG</span>
+        </a>
+      </div>
     </div>
-  </div>
+
+    <!-- SemiAnalysis -->
+    <div class="source-group">
+      <div class="source-label semi">
+        <div class="dot"></div>
+        SemiAnalysis
+      </div>
+      <div class="post-list">
+        <a href="semianalysis/a_brain_too_big_to_carry/index.html">
+          <span class="post-num">03</span>
+          <span class="post-body">
+            <span class="post-title">
+              A Brain Too Big to Carry
+              <svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E8EBED" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+            </span>
+            <span class="post-desc">On-device vs datacenter inference for robot AI — latency budgets, silicon economics, the network wall, and TCO tradeoffs at fleet scale.</span>
+            <span class="post-date">Sep 14, 2026</span>
+          </span>
+          <span class="post-tag">SA</span>
+        </a>
+        <a href="semianalysis/vera_rubin_nvl72_agentic_inference/index.html">
+          <span class="post-num">04</span>
+          <span class="post-body">
+            <span class="post-title">
+              Vera Rubin NVL72 Agentic Inference
+              <svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E8EBED" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+            </span>
+            <span class="post-desc">67× better performance per dollar on agentic workloads, Jensen sandbagging again, revenue per gigawatt, and why the more you buy the more you earn.</span>
+            <span class="post-date">Sep 14, 2026</span>
+          </span>
+          <span class="post-tag">SA</span>
+        </a>
+        <a href="semianalysis/engrams_embedding_entendre_codesign/index.html">
+          <span class="post-num">05</span>
+          <span class="post-body">
+            <span class="post-title">
+              Engrams Embedding Entendre
+              <svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E8EBED" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+            </span>
+            <span class="post-desc">How DeepSeek's n-gram memory tables reduce HBM pressure, why DRAM offloading matches HBM performance, and what breaks when you pull Engram out of a trained model.</span>
+            <span class="post-date">Sep 18, 2026</span>
+          </span>
+          <span class="post-tag">SA</span>
+        </a>
+      </div>
+    </div>
+  </div><!-- /panel-all -->
+
+  <!-- ══ ByteByteGo panel ══ -->
+  <div class="tab-panel fade-in" id="panel-bbg">
+    <!-- email subtabs -->
+    <div class="subtabs-bar" role="tablist" aria-label="ByteByteGo emails">
+      <button class="subtab-btn active" role="tab" aria-selected="true"  data-source="bbg" data-subtab="bbg-0">API Concepts</button>
+      <button class="subtab-btn"        role="tab" aria-selected="false" data-source="bbg" data-subtab="bbg-1">LLM Needle in a Haystack</button>
+    </div>
+
+    <!-- BBG email 0 -->
+    <div class="subtab-panel active fade-in" id="subtab-bbg-0">
+      <div class="email-detail">
+        <div class="email-title">API Concepts Every Software Engineer Should Know</div>
+        <div class="email-meta"><span>ByteByteGo</span><span>EP226</span><span>Sep 19, 2026</span></div>
+        <div class="email-desc">HTTP methods, status codes, REST vs GraphQL vs gRPC, OAuth 2.0, JWT deep-dive, rate limiting, idempotency — with an interactive playground and quiz.</div>
+        <a class="open-btn" href="bytebytego/api_concepts_every_software_engineer_should_know/index.html">
+          Open interactive
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- BBG email 1 -->
+    <div class="subtab-panel fade-in" id="subtab-bbg-1">
+      <div class="email-detail">
+        <div class="email-title">How LLMs Find a Needle in a Haystack</div>
+        <div class="email-meta"><span>ByteByteGo</span><span>BBG</span><span>Sep 16, 2026</span></div>
+        <div class="email-desc">RAG pipelines, vector search, HNSW indexing, chunking strategies, metadata filtering — with a live embedding visualiser and recall tuner.</div>
+        <a class="open-btn" href="bytebytego/how_llms_find_a_needle_in_a_haystack/index.html">
+          Open interactive
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+        </a>
+      </div>
+    </div>
+  </div><!-- /panel-bbg -->
+
+  <!-- ══ SemiAnalysis panel ══ -->
+  <div class="tab-panel fade-in" id="panel-semi">
+    <!-- email subtabs -->
+    <div class="subtabs-bar" role="tablist" aria-label="SemiAnalysis emails">
+      <button class="subtab-btn active" role="tab" aria-selected="true"  data-source="semi" data-subtab="semi-0">Brain Too Big</button>
+      <button class="subtab-btn"        role="tab" aria-selected="false" data-source="semi" data-subtab="semi-1">Vera Rubin NVL72</button>
+      <button class="subtab-btn"        role="tab" aria-selected="false" data-source="semi" data-subtab="semi-2">Engrams Embedding</button>
+    </div>
+
+    <!-- Semi email 0 -->
+    <div class="subtab-panel active fade-in" id="subtab-semi-0">
+      <div class="email-detail">
+        <div class="email-title">A Brain Too Big to Carry</div>
+        <div class="email-meta"><span>SemiAnalysis</span><span>SA</span><span>Sep 14, 2026</span></div>
+        <div class="email-desc">On-device vs datacenter inference for robot AI — latency budgets, silicon economics, the network wall, and TCO tradeoffs at fleet scale.</div>
+        <a class="open-btn" href="semianalysis/a_brain_too_big_to_carry/index.html">
+          Open interactive
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Semi email 1 -->
+    <div class="subtab-panel fade-in" id="subtab-semi-1">
+      <div class="email-detail">
+        <div class="email-title">Vera Rubin NVL72 Agentic Inference</div>
+        <div class="email-meta"><span>SemiAnalysis</span><span>SA</span><span>Sep 14, 2026</span></div>
+        <div class="email-desc">67× better performance per dollar on agentic workloads, Jensen sandbagging again, revenue per gigawatt, and why the more you buy the more you earn.</div>
+        <a class="open-btn" href="semianalysis/vera_rubin_nvl72_agentic_inference/index.html">
+          Open interactive
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Semi email 2 -->
+    <div class="subtab-panel fade-in" id="subtab-semi-2">
+      <div class="email-detail">
+        <div class="email-title">Engrams Embedding Entendre</div>
+        <div class="email-meta"><span>SemiAnalysis</span><span>SA</span><span>Sep 18, 2026</span></div>
+        <div class="email-desc">How DeepSeek's n-gram memory tables reduce HBM pressure, why DRAM offloading matches HBM performance, and what breaks when you pull Engram out of a trained model.</div>
+        <a class="open-btn" href="semianalysis/engrams_embedding_entendre_codesign/index.html">
+          Open interactive
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+        </a>
+      </div>
+    </div>
+  </div><!-- /panel-semi -->
 
   <footer>
     <div class="links">
@@ -188,6 +365,58 @@
     </div>
   </footer>
 </div>
+
+<script>
+  // ── Source tab switching ──
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+
+      // update tab buttons
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.toggle('active', b === btn);
+        b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+      });
+
+      // update panels
+      document.querySelectorAll('.tab-panel').forEach(p => {
+        const isActive = p.id === `panel-${target}`;
+        p.classList.toggle('active', isActive);
+        if (isActive) {
+          // re-trigger fade animation
+          p.classList.remove('fade-in');
+          void p.offsetWidth;
+          p.classList.add('fade-in');
+        }
+      });
+    });
+  });
+
+  // ── Email subtab switching ──
+  document.querySelectorAll('.subtab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const source = btn.dataset.source;
+      const target = btn.dataset.subtab;
+
+      // update subtab buttons within this source
+      document.querySelectorAll(`.subtab-btn[data-source="${source}"]`).forEach(b => {
+        b.classList.toggle('active', b === btn);
+        b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+      });
+
+      // update subtab panels within this source
+      document.querySelectorAll(`[id^="subtab-${source}"]`).forEach(p => {
+        const isActive = p.id === `subtab-${target}`;
+        p.classList.toggle('active', isActive);
+        if (isActive) {
+          p.classList.remove('fade-in');
+          void p.offsetWidth;
+          p.classList.add('fade-in');
+        }
+      });
+    });
+  });
+</script>
 
 </body>
 </html>

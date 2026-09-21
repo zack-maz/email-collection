@@ -203,6 +203,32 @@ If not: cut the ones that aren't.
 
 ---
 
+## 8. Metadata Conventions
+
+Every resource has a fixed set of metadata displayed in the hero section. These fields must be present and accurate on every page.
+
+### Required hero meta fields
+
+| Field | Type | Example | Notes |
+|---|---|---|---|
+| **Published** | Date | `Sep 19, 2026` | Original publication date of the source newsletter or article. Format: `Mon DD, YYYY`. Always the first meta item. |
+| **Source** | Text | `ByteByteGo Newsletter` | Name of the originating publication. Only present where the page uses the `meta-row` / `meta-item` pattern (ByteByteGo style). SemiAnalysis pages carry source in the eyebrow instead. |
+| **Sections** | Number | `5` | Count of top-level content sections (excluding the quiz). |
+| **Interactives** | Number | `4` | Count of interactive components on the page. |
+| **Quiz** | Text | `6 questions` | Number of quiz questions. |
+
+### Home page listing
+
+On `index.html`, each post row in the All panel must show:
+- A `<span class="post-date">` immediately after `<span class="post-desc">`, inside the `.post-body` column. Format: `Mon DD, YYYY`.
+- The same date appears as a third `<span>` inside the `.email-meta` div on the subtab detail card.
+
+### Date format rule
+
+Use abbreviated month name + day (no leading zero) + full year: **`Sep 14, 2026`**. No ordinals, no ISO format, no slashes. This keeps it readable in the narrow mono context it appears in.
+
+---
+
 ## Reference: Voices to Study
 
 The resources in this collection are trying to occupy a space between:
