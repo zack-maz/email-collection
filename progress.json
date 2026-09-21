@@ -3,8 +3,10 @@
   "emails": {
     "bbg-0": { "status": "unread" },
     "bbg-1": { "status": "unread" },
+    "bbg-2": { "status": "unread" },
     "semi-0": { "status": "unread" },
     "semi-1": { "status": "unread" },
-    "semi-2": { "status": "unread" }
+    "semi-2": { "status": "unread" },
+    "semi-3": { "status": "unread" }
   }
 }

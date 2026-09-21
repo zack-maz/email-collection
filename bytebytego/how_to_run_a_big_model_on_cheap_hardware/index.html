@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to Run a Big Model on Cheap Hardware — ByteByteGo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0A0A0A; color: #C9CDD2; font-family: 'Hanken Grotesk','Helvetica Neue',Arial,sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #E8EBED; text-decoration: none; }
+  a:hover { color: #FFFFFF; }
+
+  .rail { position: fixed; left: 32px; top: 80px; bottom: 80px; width: 1px; background: #1E2227; pointer-events: none; z-index: 10; }
+  .rail-cap { position: fixed; left: 32px; top: 80px; width: 1px; height: 56px; background: #E8EBED; opacity: 0.7; pointer-events: none; z-index: 11; }
+  .rail-label { position: fixed; left: 44px; font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; letter-spacing: 0.06em; color: #7C848D; pointer-events: none; z-index: 11; }
+  .rail-label.l0 { top: 74px; }
+  .rail-label.l1 { top: 464px; }
+
+  nav { display: flex; justify-content: space-between; align-items: center; height: 64px; padding: 0 80px; }
+  nav .wordmark { font-size: 14px; font-weight: 500; color: #E8EBED; }
+  nav .links { display: flex; gap: 28px; font-size: 14px; }
+  nav .links a { color: #C9CDD2; }
+  nav .links a.active { color: #E8EBED; }
+
+  .page { padding: 0 80px; }
+
+  header.hero { padding: 56px 0 48px; border-bottom: 1px solid #1E2227; display: flex; flex-direction: column; gap: 14px; }
+  header.hero .eyebrow { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #7C848D; }
+  header.hero h1 { font-size: 44px; line-height: 1.1; font-weight: 500; letter-spacing: -0.02em; color: #E8EBED; max-width: 780px; text-wrap: pretty; }
+  header.hero p { max-width: 560px; font-size: 18px; line-height: 1.65; color: #C9CDD2; text-wrap: pretty; }
+  header.hero .meta-row { display: flex; align-items: baseline; gap: 24px; padding-top: 4px; flex-wrap: wrap; }
+  header.hero .meta-item { display: flex; align-items: baseline; gap: 8px; }
+  header.hero .meta-label { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #7C848D; }
+  header.hero .meta-val { font-size: 14px; color: #C9CDD2; }
+
+  .sec-nav { display: flex; gap: 0; border-bottom: 1px solid #1E2227; margin-top: 48px; overflow-x: auto; scrollbar-width: none; }
+  .sec-nav::-webkit-scrollbar { display: none; }
+  .sec-btn { background: none; border: none; border-bottom: 2px solid transparent; color: #7C848D; cursor: pointer; font-family: 'Hanken Grotesk',sans-serif; font-size: 14px; padding: 12px 0; margin-right: 28px; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
+  .sec-btn:hover { color: #C9CDD2; }
+  .sec-btn.active { color: #E8EBED; border-bottom-color: #E8EBED; }
+
+  .section { display: none; padding: 48px 0 64px; }
+  .section.active { display: block; }
+
+  .content h2 { font-size: 22px; font-weight: 500; color: #E8EBED; margin-bottom: 20px; letter-spacing: -0.01em; }
+  .content h3 { font-size: 15px; font-weight: 500; color: #E8EBED; margin: 32px 0 14px; }
+  .content p { font-size: 15px; line-height: 1.65; color: #C9CDD2; max-width: 640px; margin-bottom: 16px; text-wrap: pretty; }
+  .content ul { padding-left: 20px; margin-bottom: 16px; max-width: 640px; }
+  .content li { font-size: 15px; line-height: 1.65; color: #C9CDD2; margin-bottom: 6px; }
+
+  .callout { border-left: 2px solid #1E2227; padding: 14px 20px; margin: 24px 0; max-width: 640px; }
+  .callout.info  { border-color: #7AA2F7; background: rgba(122,162,247,0.04); }
+  .callout.warn  { border-color: #E0AF68; background: rgba(224,175,104,0.04); }
+  .callout.good  { border-color: #9ECE6A; background: rgba(158,206,106,0.04); }
+  .callout.danger{ border-color: #F7768E; background: rgba(247,118,142,0.04); }
+  .callout p { margin-bottom: 0; }
+  .callout-label { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+  .callout.info  .callout-label { color: #7AA2F7; }
+  .callout.warn  .callout-label { color: #E0AF68; }
+  .callout.good  .callout-label { color: #9ECE6A; }
+  .callout.danger .callout-label { color: #F7768E; }
+
+  .ic { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 12px; color: #7AA2F7; background: #0D0F12; border: 1px solid #1E2227; padding: 1px 6px; }
+
+  /* ── Interactive panels ── */
+  .interactive { background: #0D0F12; border: 1px solid #1E2227; padding: 28px; margin: 32px 0; max-width: 780px; }
+  .interactive-title { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #7C848D; margin-bottom: 20px; }
+
+  /* slider controls */
+  .ctrl-row { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+  .ctrl-label { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; color: #7C848D; min-width: 140px; }
+  .ctrl-slider { -webkit-appearance: none; appearance: none; width: 220px; height: 2px; background: #1E2227; outline: none; cursor: pointer; }
+  .ctrl-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: #E8EBED; cursor: pointer; }
+  .ctrl-slider::-moz-range-thumb { width: 14px; height: 14px; background: #E8EBED; border: none; cursor: pointer; }
+  .ctrl-val { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 13px; color: #E8EBED; min-width: 80px; }
+
+  /* output display */
+  .out-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: #1E2227; margin-top: 20px; }
+  .out-cell { background: #0D0F12; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .out-cell-label { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #7C848D; }
+  .out-cell-val { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 20px; color: #E8EBED; }
+  .out-cell-sub { font-size: 12px; color: #7C848D; }
+  .out-cell-val.warn  { color: #E0AF68; }
+  .out-cell-val.danger{ color: #F7768E; }
+  .out-cell-val.good  { color: #9ECE6A; }
+
+  /* bar visualisations */
+  .bar-wrap { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; max-width: 560px; }
+  .bar-row { display: flex; align-items: center; gap: 12px; }
+  .bar-row-label { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; color: #7C848D; min-width: 96px; text-align: right; }
+  .bar-track { flex: 1; height: 8px; background: #1E2227; position: relative; }
+  .bar-fill { height: 100%; transition: width 0.25s ease; }
+  .bar-fill.blue   { background: #7AA2F7; }
+  .bar-fill.green  { background: #9ECE6A; }
+  .bar-fill.amber  { background: #E0AF68; }
+  .bar-fill.red    { background: #F7768E; }
+  .bar-fill.purple { background: #BB9AF7; }
+  .bar-val { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; color: #C9CDD2; min-width: 52px; }
+
+  /* token stream */
+  .token-stream { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 20px; min-height: 60px; align-items: flex-start; }
+  .token { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 12px; padding: 3px 8px; border: 1px solid #1E2227; color: #C9CDD2; transition: all 0.2s; }
+  .token.draft  { color: #7AA2F7; border-color: #2A3A5E; background: rgba(122,162,247,0.06); }
+  .token.accept { color: #9ECE6A; border-color: #2A3820; background: rgba(158,206,106,0.08); }
+  .token.reject { color: #F7768E; border-color: #3A1E22; background: rgba(247,118,142,0.06); }
+  .token.verify { color: #E0AF68; border-color: #3A3020; background: rgba(224,175,104,0.06); }
+
+  /* offload diagram */
+  .memory-diagram { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; max-width: 560px; }
+  .mem-tier { border: 1px solid #1E2227; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+  .mem-tier-label { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; color: #7C848D; }
+  .mem-tier-layers { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 13px; color: #E8EBED; }
+  .mem-tier.active-tier { background: rgba(122,162,247,0.06); border-color: #2A3A5E; }
+  .mem-tier.active-tier .mem-tier-layers { color: #7AA2F7; }
+
+  /* MoE expert grid */
+  .expert-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 20px; max-width: 480px; }
+  .expert-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; border: 1px solid #1E2227; color: #7C848D; transition: all 0.2s; cursor: default; }
+  .expert-cell.active-expert { background: rgba(122,162,247,0.10); border-color: #2A3A5E; color: #7AA2F7; }
+  .expert-cell.inactive-expert { opacity: 0.35; }
+
+  /* quiz */
+  .quiz-q { margin-bottom: 36px; max-width: 680px; }
+  .quiz-q .q-text { font-size: 16px; line-height: 1.55; color: #E8EBED; margin-bottom: 16px; font-weight: 500; }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-opt { background: none; border: 1px solid #2A2F37; padding: 12px 16px; text-align: left; cursor: pointer; font-family: 'Hanken Grotesk',sans-serif; font-size: 14px; color: #C9CDD2; transition: border-color 0.15s, color 0.15s; }
+  .quiz-opt:hover:not(:disabled) { border-color: #4A5260; color: #E8EBED; }
+  .quiz-opt.correct  { border-color: #2A3820; color: #9ECE6A; background: rgba(158,206,106,0.06); }
+  .quiz-opt.wrong    { border-color: #3A1E22; color: #F7768E; background: rgba(247,118,142,0.06); }
+  .quiz-opt:disabled { cursor: default; }
+  .quiz-explain { margin-top: 12px; font-size: 14px; line-height: 1.6; color: #7C848D; display: none; max-width: 620px; }
+  .quiz-explain.show { display: block; }
+  .quiz-score { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 13px; color: #7C848D; margin-bottom: 32px; }
+
+  /* table */
+  .tbl { width: 100%; max-width: 860px; border-collapse: collapse; font-size: 13px; margin: 16px 0; }
+  .tbl th { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #7C848D; text-align: left; padding: 10px 16px 10px 0; border-bottom: 1px solid #1E2227; font-weight: 400; }
+  .tbl td { padding: 12px 16px 12px 0; border-bottom: 1px solid #1E2227; color: #C9CDD2; vertical-align: top; line-height: 1.5; }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl tr:hover td { color: #E8EBED; }
+
+  footer { margin: 64px 0 0; padding: 20px 0 40px; border-top: 1px solid #1E2227; display: flex; justify-content: space-between; align-items: center; }
+  footer .links { display: flex; gap: 28px; font-size: 14px; }
+  footer .links a { color: #C9CDD2; }
+  footer .meta { display: flex; gap: 24px; font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 12px; letter-spacing: 0.04em; color: #7C848D; }
+
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .rise { animation: rise 700ms cubic-bezier(.2,.7,.2,1) both; }
+  .rise-2 { animation: rise 700ms cubic-bezier(.2,.7,.2,1) 80ms both; }
+  @media (prefers-reduced-motion: reduce) { .rise, .rise-2 { animation: none; } }
+  @media (max-width: 720px) {
+    .rail, .rail-cap, .rail-label { left: 11px; }
+    nav, .page { padding: 0 24px; }
+    nav .links { gap: 16px; }
+    header.hero h1 { font-size: 28px; }
+    .interactive { padding: 18px; }
+    .ctrl-slider { width: 140px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="rail"></div>
+<div class="rail-cap"></div>
+<span class="rail-label l0">L 00</span>
+<span class="rail-label l1">L 01</span>
+
+<nav>
+  <a href="../../index.html" class="wordmark">zm / learning</a>
+  <div class="links">
+    <a href="../../index.html">Index</a>
+    <a href="../api_concepts_every_software_engineer_should_know/index.html">API Concepts</a>
+    <a href="#" class="active">Run Big Models</a>
+  </div>
+</nav>
+
+<div class="page">
+  <header class="hero rise">
+    <div class="eyebrow">ByteByteGo · Newsletter Deep-Dive</div>
+    <h1>How to Run a Big Model on Cheap Hardware</h1>
+    <p>Quantization, offloading, MoE routing, distillation, pruning, and speculative decoding — each technique explained through the memory problem it solves.</p>
+    <div class="meta-row">
+      <div class="meta-item"><span class="meta-label">Published</span><span class="meta-val">Sep 21, 2026</span></div>
+      <div class="meta-item"><span class="meta-label">Source</span><span class="meta-val">ByteByteGo Newsletter</span></div>
+      <div class="meta-item"><span class="meta-label">Sections</span><span class="meta-val">7</span></div>
+      <div class="meta-item"><span class="meta-label">Interactives</span><span class="meta-val">5</span></div>
+      <div class="meta-item"><span class="meta-label">Quiz</span><span class="meta-val">6 questions</span></div>
+    </div>
+  </header>
+
+  <nav class="sec-nav rise-2" id="sec-nav">
+    <button class="sec-btn active" data-sec="memory">Memory Problem</button>
+    <button class="sec-btn" data-sec="quant">Quantization</button>
+    <button class="sec-btn" data-sec="offload">Offloading</button>
+    <button class="sec-btn" data-sec="moe">MoE</button>
+    <button class="sec-btn" data-sec="distill">Distillation &amp; Pruning</button>
+    <button class="sec-btn" data-sec="speculative">Speculative Decoding</button>
+    <button class="sec-btn" data-sec="quiz">Quiz</button>
+  </nav>
+
+
+  <!-- ══ SECTION: Memory Problem ══ -->
+  <div class="section active" id="sec-memory">
+    <div class="content">
+      <h2>The Memory Problem</h2>
+      <p>An AI model is a collection of numerical values called <strong>weights</strong> (or parameters). An "8B model" has approximately eight billion of them. During inference — using the model to answer questions — these weights pass through the processor repeatedly, one generated token at a time.</p>
+      <p>The hardware constraint is simple: weights must fit somewhere accessible enough to be useful. There are three places they can live, each faster and more expensive than the last.</p>
+
+      <div class="callout warn">
+        <div class="callout-label">Key insight</div>
+        <p>A model that <em>fits</em> in memory can still be <em>too slow</em> to use. Memory <strong>bandwidth</strong> — how quickly the processor can read the weights — is often the real bottleneck for single-user text generation.</p>
+      </div>
+
+      <h3>Where weights live and what that costs</h3>
+
+      <!-- Interactive: memory tier calculator -->
+      <div class="interactive">
+        <div class="interactive-title">Memory Tier Explorer</div>
+        <div class="ctrl-row">
+          <span class="ctrl-label">Model size (B params)</span>
+          <input type="range" class="ctrl-slider" id="sl-params" min="1" max="70" value="8" step="1">
+          <span class="ctrl-val" id="cv-params">8B</span>
+        </div>
+        <div class="ctrl-row">
+          <span class="ctrl-label">Bits per weight</span>
+          <input type="range" class="ctrl-slider" id="sl-bits" min="2" max="16" value="16" step="2">
+          <span class="ctrl-val" id="cv-bits">16-bit</span>
+        </div>
+
+        <div class="out-grid" id="mem-out-grid">
+          <div class="out-cell">
+            <div class="out-cell-label">Raw weights</div>
+            <div class="out-cell-val" id="ov-raw">16.0 GB</div>
+            <div class="out-cell-sub">params × bits / 8</div>
+          </div>
+          <div class="out-cell">
+            <div class="out-cell-label">Total w/ overhead</div>
+            <div class="out-cell-val" id="ov-total">~22 GB</div>
+            <div class="out-cell-sub">KV cache + activations</div>
+          </div>
+          <div class="out-cell">
+            <div class="out-cell-label">Fits in 8 GB VRAM?</div>
+            <div class="out-cell-val" id="ov-vram">✗ No</div>
+          </div>
+          <div class="out-cell">
+            <div class="out-cell-label">Fits in 24 GB VRAM?</div>
+            <div class="out-cell-val" id="ov-vram24">✗ No</div>
+          </div>
+        </div>
+
+        <div class="bar-wrap" id="mem-bars">
+          <div class="bar-row">
+            <span class="bar-row-label">VRAM (8 GB)</span>
+            <div class="bar-track"><div class="bar-fill blue" id="bar-vram8" style="width:100%"></div></div>
+            <span class="bar-val" id="bv-vram8">overflow</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-row-label">VRAM (24 GB)</span>
+            <div class="bar-track"><div class="bar-fill blue" id="bar-vram24" style="width:100%"></div></div>
+            <span class="bar-val" id="bv-vram24">overflow</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-row-label">RAM (32 GB)</span>
+            <div class="bar-track"><div class="bar-fill amber" id="bar-ram" style="width:50%"></div></div>
+            <span class="bar-val" id="bv-ram">50%</span>
+          </div>
+        </div>
+
+        <div class="callout info" style="margin-top:20px;">
+          <div class="callout-label">Try it</div>
+          <p id="mem-insight">Set params to 70B at 16-bit — it doesn't fit anywhere reasonable. Drop to 4-bit and watch the math change.</p>
+        </div>
+      </div>
+
+      <h3>Two stages with different bottlenecks</h3>
+      <p>Inference has two phases. During <strong>prefill</strong>, the model processes the entire prompt at once — lots of parallel work, GPU-bound. During <strong>decoding</strong>, it generates tokens one at a time — memory bandwidth-bound, because the full model must be read for every single token.</p>
+      <p>This means a model can be fast at understanding a long prompt but painfully slow at generating a short reply. Throughput and latency are separate concerns.</p>
+
+      <table class="tbl">
+        <thead><tr><th>Stage</th><th>What happens</th><th>Primary bottleneck</th></tr></thead>
+        <tbody>
+          <tr><td>Prefill</td><td>All prompt tokens processed in parallel</td><td>Compute (FLOPS)</td></tr>
+          <tr><td>Decoding</td><td>One token generated at a time, each requiring a full model read</td><td>Memory bandwidth (GB/s)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ SECTION: Quantization ══ -->
+  <div class="section" id="sec-quant">
+    <div class="content">
+      <h2>Quantization</h2>
+      <p>Every weight is a floating-point number. At 16-bit (FP16 or BF16) precision, each weight takes 2 bytes. Quantization maps those high-precision values onto a smaller set of discrete codes — fewer bits per weight, less memory consumed.</p>
+      <p>The analogy: a weather forecast that says "73.4°F" and one that says "73°F" convey nearly the same information. The approximation introduces a small error — the question is whether the task tolerates it.</p>
+
+      <div class="callout warn">
+        <div class="callout-label">The tradeoff</div>
+        <p>Quantization does <strong>not</strong> change the number of parameters. It changes how much space each one takes. Quality can degrade — by how much depends on the model, the quantization method, and the task. Math and precise reasoning tend to suffer more than general conversation.</p>
+      </div>
+
+      <!-- Interactive: quantization calculator -->
+      <div class="interactive">
+        <div class="interactive-title">Quantization Memory Calculator</div>
+
+        <div class="ctrl-row">
+          <span class="ctrl-label">Model size (B params)</span>
+          <input type="range" class="ctrl-slider" id="q-params" min="1" max="70" value="8" step="1">
+          <span class="ctrl-val" id="q-cv-params">8B</span>
+        </div>
+
+        <div style="margin: 16px 0 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #7C848D; text-transform: uppercase; letter-spacing: 0.06em;">Compare precision levels</div>
+        <div class="bar-wrap">
+          <div class="bar-row">
+            <span class="bar-row-label">FP32 (32-bit)</span>
+            <div class="bar-track"><div class="bar-fill red" id="q-bar-fp32" style="width:100%"></div></div>
+            <span class="bar-val" id="q-val-fp32">32 GB</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-row-label">FP16 (16-bit)</span>
+            <div class="bar-track"><div class="bar-fill blue" id="q-bar-fp16" style="width:50%"></div></div>
+            <span class="bar-val" id="q-val-fp16">16 GB</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-row-label">INT8 (8-bit)</span>
+            <div class="bar-track"><div class="bar-fill green" id="q-bar-int8" style="width:25%"></div></div>
+            <span class="bar-val" id="q-val-int8">8 GB</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-row-label">INT4 (4-bit)</span>
+            <div class="bar-track"><div class="bar-fill green" id="q-bar-int4" style="width:12.5%"></div></div>
+            <span class="bar-val" id="q-val-int4">4 GB</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-row-label">INT2 (2-bit)</span>
+            <div class="bar-track"><div class="bar-fill amber" id="q-bar-int2" style="width:6.25%"></div></div>
+            <span class="bar-val" id="q-val-int2">2 GB</span>
+          </div>
+        </div>
+
+        <div class="out-grid" style="margin-top:20px;">
+          <div class="out-cell">
+            <div class="out-cell-label">4-bit vs 16-bit</div>
+            <div class="out-cell-val good" id="q-saving">4× smaller</div>
+            <div class="out-cell-sub">raw weight storage</div>
+          </div>
+          <div class="out-cell">
+            <div class="out-cell-label">Quality risk</div>
+            <div class="out-cell-val" id="q-risk">Low–medium</div>
+            <div class="out-cell-sub">depends on task</div>
+          </div>
+        </div>
+
+        <div class="callout info" style="margin-top:20px;">
+          <div class="callout-label">Note</div>
+          <p>4-bit storage doesn't guarantee 4× faster inference. Many engines dequantize to FP16 before the matrix multiply. Actual speedup requires hardware with native low-bit support (e.g. NVIDIA Turing+ INT4 tensor cores).</p>
+        </div>
+      </div>
+
+      <h3>Post-training vs. quantization-aware training</h3>
+      <p>Quantization can happen after training (post-training quantization, PTQ) with no re-training needed — just apply the scheme to the checkpoint. The alternative, quantization-aware training (QAT), bakes the approximation error into the training loop, which tends to recover more quality, but requires compute access to the original training pipeline.</p>
+      <p>Most practitioners start with an off-the-shelf PTQ checkpoint (GGUF Q4_K_M, AWQ, GPTQ) and measure whether output quality is acceptable for their task.</p>
+    </div>
+  </div>
+
+  <!-- ══ SECTION: Offloading ══ -->
+  <div class="section" id="sec-offload">
+    <div class="content">
+      <h2>Layer-wise Offloading</h2>
+      <p>Quantization shrinks each weight. Offloading changes <em>where</em> the weights live at any given moment. A transformer processes input layer by layer — and the GPU only needs the current layer's weights to do its work.</p>
+      <p>An offloading system keeps most weights in CPU RAM (or even on disk), transfers one layer to the GPU, executes it, and frees that GPU memory before loading the next. This lets a model whose total weights exceed VRAM still run on that GPU — at a cost.</p>
+
+      <div class="callout danger">
+        <div class="callout-label">The real cost</div>
+        <p>Every transferred layer adds latency proportional to its size divided by the transfer bandwidth. A 10 GB transfer over PCIe at ~10 GB/s costs ~1 second per decoding step. That's unusable for interactive chat.</p>
+      </div>
+
+      <!-- Interactive: offload latency estimator -->
+      <div class="interactive">
+        <div class="interactive-title">Layer Offload Latency Estimator</div>
+
+        <div class="ctrl-row">
+          <span class="ctrl-label">Total layers</span>
+          <input type="range" class="ctrl-slider" id="ol-layers" min="8" max="80" value="32" step="4">
+          <span class="ctrl-val" id="ol-cv-layers">32</span>
+        </div>
+        <div class="ctrl-row">
+          <span class="ctrl-label">GPU layers (fast)</span>
+          <input type="range" class="ctrl-slider" id="ol-gpu" min="0" max="80" value="16" step="1">
+          <span class="ctrl-val" id="ol-cv-gpu">16</span>
+        </div>
+        <div class="ctrl-row">
+          <span class="ctrl-label">Bits per weight</span>
+          <input type="range" class="ctrl-slider" id="ol-bits" min="4" max="16" value="4" step="4">
+          <span class="ctrl-val" id="ol-cv-bits">4-bit</span>
+        </div>
+        <div class="ctrl-row">
+          <span class="ctrl-label">Model params (B)</span>
+          <input type="range" class="ctrl-slider" id="ol-params" min="7" max="70" value="13" step="7">
+          <span class="ctrl-val" id="ol-cv-params">13B</span>
+        </div>
+
+        <!-- memory tier diagram -->
+        <div class="memory-diagram" id="offload-diagram">
+          <div class="mem-tier" id="tier-gpu">
+            <span class="mem-tier-label">VRAM (GPU — fast)</span>
+            <span class="mem-tier-layers" id="tier-gpu-val">16 layers</span>
+          </div>
+          <div class="mem-tier" id="tier-ram">
+            <span class="mem-tier-label">RAM (CPU — slower)</span>
+            <span class="mem-tier-layers" id="tier-ram-val">16 layers</span>
+          </div>
+        </div>
+
+        <div class="out-grid" style="margin-top:20px;">
+          <div class="out-cell">
+            <div class="out-cell-label">GPU memory needed</div>
+            <div class="out-cell-val" id="ol-vram">~3.3 GB</div>
+            <div class="out-cell-sub">GPU-resident layers</div>
+          </div>
+          <div class="out-cell">
+            <div class="out-cell-label">Transfer / step</div>
+            <div class="out-cell-val" id="ol-xfer">~3.3 GB</div>
+            <div class="out-cell-sub">offloaded layers × weight size</div>
+          </div>
+          <div class="out-cell">
+            <div class="out-cell-label">Est. step latency</div>
+            <div class="out-cell-val warn" id="ol-latency">~330 ms</div>
+            <div class="out-cell-sub">transfer only, PCIe ~10 GB/s</div>
+          </div>
+          <div class="out-cell">
+            <div class="out-cell-label">Usable for chat?</div>
+            <div class="out-cell-val" id="ol-usable">Marginal</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>CPU execution as a fallback</h3>
+      <p>If no GPU is available, layers can be assigned permanently to the CPU. Generation is much slower — CPUs have lower memory bandwidth than GPUs — but the model runs. For batch workloads where latency doesn't matter, CPU-only inference is viable.</p>
+      <p>The practical takeaway: offloading expands what you can <em>run</em>, not what you can <em>use interactively</em>. Measure tokens-per-second before committing to an offloading configuration.</p>
+    </div>
+  </div>
+
+  <!-- ══ SECTION: MoE ══ -->
+  <div class="section" id="sec-moe">
+    <div class="content">
+      <h2>Mixture of Experts</h2>
+      <p>Dense transformers send every token through every parameter. Mixture of Experts (MoE) is an architectural change: some layers contain multiple sub-networks called <strong>experts</strong>, and a small routing network selects which two (or <em>k</em>) of them process each token. The rest sit idle for that token.</p>
+      <p>This creates a distinction that matters for hardware planning:</p>
+      <ul>
+        <li><strong>Total parameters</strong> — determines storage size. All experts must be held somewhere.</li>
+        <li><strong>Active parameters</strong> — determines per-token computation cost. Only the selected experts run.</li>
+      </ul>
+
+      <div class="callout warn">
+        <div class="callout-label">The storage trap</div>
+        <p>A hypothetical MoE with 40B total parameters at 4-bit precision still needs ~20 GB of storage — the inactive experts sit in memory waiting to be selected. MoE reduces compute, not storage.</p>
+      </div>
+
+      <!-- Interactive: MoE expert visualiser -->
+      <div class="interactive">
+        <div class="interactive-title">MoE Expert Router — Token by Token</div>
+
+        <div class="ctrl-row">
+          <span class="ctrl-label">Experts per layer</span>
+          <input type="range" class="ctrl-slider" id="moe-experts" min="4" max="16" value="8" step="4">
+          <span class="ctrl-val" id="moe-cv-experts">8</span>
+        </div>
+        <div class="ctrl-row">
+          <span class="ctrl-label">Experts activated (k)</span>
+          <input type="range" class="ctrl-slider" id="moe-k" min="1" max="4" value="2" step="1">
+          <span class="ctrl-val" id="moe-cv-k">2</span>
+        </div>
+
+        <div class="expert-grid" id="moe-grid"></div>
+
+        <div style="margin-top:16px; display:flex; gap:24px; flex-wrap:wrap;">
+          <button id="moe-next-btn" style="background:none;border:1px solid #2A2F37;padding:8px 18px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;color:#C9CDD2;cursor:pointer;">Next token →</button>
+          <button id="moe-reset-btn" style="background:none;border:1px solid #2A2F37;padding:8px 18px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;color:#7C848D;cursor:pointer;">Reset</button>
+        </div>
+
+        <div class="out-grid" style="margin-top:20px;">
+          <div class="out-cell">
+            <div class="out-cell-label">Total experts</div>
+            <div class="out-cell-val" id="moe-total">8</div>
+          </div>
+          <div class="out-cell">
+            <div class="out-cell-label">Active this token</div>
+            <div class="out-cell-val good" id="moe-active">2</div>
+          </div>
+          <div class="out-cell">
+            <div class="out-cell-label">Compute ratio</div>
+            <div class="out-cell-val" id="moe-ratio">25%</div>
+            <div class="out-cell-sub">vs dense equivalent</div>
+          </div>
+          <div class="out-cell">
+            <div class="out-cell-label">Storage still</div>
+            <div class="out-cell-val warn" id="moe-storage">100%</div>
+            <div class="out-cell-sub">all experts must be held</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Real-world examples</h3>
+      <table class="tbl">
+        <thead><tr><th>Model</th><th>Total params</th><th>Active params / token</th><th>Note</th></tr></thead>
+        <tbody>
+          <tr><td>Mixtral 8×7B</td><td>~47B</td><td>~13B</td><td>2 of 8 experts selected per token per layer</td></tr>
+          <tr><td>DeepSeek-V3</td><td>~685B</td><td>~37B</td><td>Fine-grained MoE, 256 routed experts</td></tr>
+          <tr><td>GPT-4 (speculated)</td><td>~1.8T</td><td>~220B</td><td>Rumoured 16-expert MoE structure</td></tr>
+        </tbody>
+      </table>
+      <p>MoE is most practical when the entire model fits in fast memory (e.g., a multi-GPU server where all experts stay in VRAM). For consumer hardware, the storage requirement usually limits which MoE models are actually usable.</p>
+    </div>
+  </div>
+
+  <!-- ══ SECTION: Distillation & Pruning ══ -->
+  <div class="section" id="sec-distill">
+    <div class="content">
+      <h2>Distillation &amp; Pruning</h2>
+
+      <h3>Knowledge Distillation</h3>
+      <p>Distillation trains a smaller <strong>student</strong> model to mimic a larger <strong>teacher</strong>. The teacher's output distributions — not just its final answers — serve as training signal. The student absorbs behavioural patterns the teacher learned, not just the weights themselves.</p>
+      <p>The resulting student is a <em>different model</em> from the original, not a compressed copy. It may perform equivalently on the tasks the teacher was distilled for while falling short on problems the teacher handled through breadth or rare-knowledge recall.</p>
+
+      <div class="callout good">
+        <div class="callout-label">When it works well</div>
+        <p>Distillation excels at narrow, high-volume tasks: routing support tickets, drafting short responses in a fixed format, classifying text. The student is trained once, then deployed millions of times on cheap hardware.</p>
+      </div>
+      <div class="callout danger">
+        <div class="callout-label">When it breaks</div>
+        <p>Don't assume a strong result on a narrow benchmark generalises. A distilled model that scores 95% on your test suite may fail unexpectedly on edge cases the teacher handled via memorised rare knowledge.</p>
+      </div>
+
+      <h3>Pruning</h3>
+      <p>Pruning removes weights — or entire structures — whose absence causes acceptable quality loss. Two flavours:</p>
+      <ul>
+        <li><strong>Unstructured pruning:</strong> individual weights set to zero. Creates sparsity. Rarely faster in practice — hardware still reads the zeroed entries unless the execution engine explicitly skips them.</li>
+        <li><strong>Structured pruning:</strong> entire heads, layers, or feed-forward blocks removed. Smaller model on disk, fewer operations at runtime — straightforward speedup.</li>
+      </ul>
+
+      <div class="callout warn">
+        <div class="callout-label">The execution caveat</div>
+        <p>Setting values to zero doesn't automatically save compute. An array with zeros still occupies memory. Actual savings require a compressed representation <em>and</em> an execution engine that knows how to skip the zeros — or structural removal that makes the model architecturally smaller.</p>
+      </div>
+
+      <table class="tbl">
+        <thead><tr><th>Technique</th><th>Changes</th><th>Requires re-training?</th><th>Actual speedup?</th></tr></thead>
+        <tbody>
+          <tr><td>Quantization</td><td>Bit-width of weights</td><td>No (PTQ) / Yes (QAT)</td><td>Yes, with hardware support</td></tr>
+          <tr><td>Distillation</td><td>Produces a new smaller model</td><td>Yes — the whole student</td><td>Yes — smaller model</td></tr>
+          <tr><td>Unstructured pruning</td><td>Individual weights → 0</td><td>Optional (recovery fine-tune)</td><td>Only with sparse execution engines</td></tr>
+          <tr><td>Structured pruning</td><td>Whole layers/heads removed</td><td>Often needed to recover quality</td><td>Yes — fewer operations</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ SECTION: Speculative Decoding ══ -->
+  <div class="section" id="sec-speculative">
+    <div class="content">
+      <h2>Speculative Decoding</h2>
+      <p>Decoding is sequential: one token at a time, each requiring a full model read. Speculative decoding exploits a different kind of parallelism — it uses a small, cheap <strong>draft model</strong> to propose several tokens at once, then uses the large model to verify all of them in a single forward pass.</p>
+      <p>If the large model agrees with a draft token, it's accepted for free. If it disagrees, everything from that point is discarded and the large model generates the correct token. The process restarts.</p>
+
+      <div class="callout info">
+        <div class="callout-label">Why this helps</div>
+        <p>The large model's cost is dominated by memory bandwidth — reading its weights. Running one forward pass to verify N tokens costs almost the same as running it once to generate one token. When the draft model is accurate, you get multiple tokens per expensive forward pass.</p>
+      </div>
+
+      <!-- Interactive: speculative decoding simulator -->
+      <div class="interactive">
+        <div class="interactive-title">Speculative Decoding Simulator</div>
+
+        <div class="ctrl-row">
+          <span class="ctrl-label">Draft window (k)</span>
+          <input type="range" class="ctrl-slider" id="spec-k" min="1" max="8" value="4" step="1">
+          <span class="ctrl-val" id="spec-cv-k">4 tokens</span>
+        </div>
+        <div class="ctrl-row">
+          <span class="ctrl-label">Draft accuracy</span>
+          <input type="range" class="ctrl-slider" id="spec-acc" min="30" max="95" value="70" step="5">
+          <span class="ctrl-val" id="spec-cv-acc">70%</span>
+        </div>
+
+        <div id="spec-stream" class="token-stream"></div>
+
+        <div style="margin-top:16px; display:flex; gap:16px; flex-wrap:wrap;">
+          <button id="spec-step-btn" style="background:none;border:1px solid #2A2F37;padding:8px 18px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;color:#C9CDD2;cursor:pointer;">Run step →</button>
+          <button id="spec-reset-btn" style="background:none;border:1px solid #2A2F37;padding:8px 18px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;color:#7C848D;cursor:pointer;">Reset</button>
+        </div>
+
+        <div class="out-grid" style="margin-top:20px;">
+          <div class="out-cell">
+            <div class="out-cell-label">Tokens accepted</div>
+            <div class="out-cell-val good" id="spec-accepted">0</div>
+          </div>
+          <div class="out-cell">
+            <div class="out-cell-label">Verifier calls</div>
+            <div class="out-cell-val" id="spec-calls">0</div>
+          </div>
+          <div class="out-cell">
+            <div class="out-cell-label">Avg tokens/call</div>
+            <div class="out-cell-val" id="spec-ratio">—</div>
+            <div class="out-cell-sub">ideal: close to k</div>
+          </div>
+          <div class="out-cell">
+            <div class="out-cell-label">Rejected batches</div>
+            <div class="out-cell-val warn" id="spec-rejected">0</div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7C848D;margin-right:16px;"><span style="color:#7AA2F7">■</span> draft</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7C848D;margin-right:16px;"><span style="color:#9ECE6A">■</span> accepted</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7C848D;margin-right:16px;"><span style="color:#F7768E">■</span> rejected</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7C848D;"><span style="color:#E0AF68">■</span> verifier correction</span>
+        </div>
+      </div>
+
+      <h3>KV cache: the other memory consumer</h3>
+      <p>Even after shrinking the weights, context length creates a second memory problem. During generation, the model stores intermediate results from every previous token in a <strong>key-value cache</strong>. This cache grows linearly with sequence length and is separate from the model weights.</p>
+      <p>For long contexts (128K tokens) the KV cache can rival or exceed the weight storage itself. Techniques like grouped-query attention (GQA), multi-query attention (MQA), and KV cache quantization exist specifically to address this.</p>
+    </div>
+  </div>
+
+  <!-- ══ SECTION: Quiz ══ -->
+  <div class="section" id="sec-quiz">
+    <div class="content">
+      <h2>Quiz</h2>
+      <p style="margin-bottom:28px;">Six questions on mechanics and tradeoffs. A reader who worked through the interactives should pass; a skimmer should not.</p>
+      <div class="quiz-score" id="quiz-score" style="display:none;"></div>
+
+      <div id="quiz-container"></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="links">
+      <a href="../../index.html">← Index</a>
+    </div>
+    <div class="meta">
+      <span>ByteByteGo · Sep 21, 2026</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+// ── Section nav ──────────────────────────────────────
+document.querySelectorAll('.sec-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const id = btn.dataset.sec;
+    document.querySelectorAll('.sec-btn').forEach(b => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.section').forEach(s => s.classList.toggle('active', s.id === 'sec-' + id));
+  });
+});
+
+// ── Memory tier explorer ─────────────────────────────
+function updateMemCalc() {
+  const params = +document.getElementById('sl-params').value;
+  const bits = +document.getElementById('sl-bits').value;
+  document.getElementById('cv-params').textContent = params + 'B';
+  document.getElementById('cv-bits').textContent = bits + '-bit';
+
+  const rawGB = params * bits / 8;
+  const totalGB = rawGB * 1.35; // KV cache + activations overhead ~35%
+  const pct8  = Math.min(rawGB / 8 * 100, 100);
+  const pct24 = Math.min(rawGB / 24 * 100, 100);
+  const pct32 = Math.min(totalGB / 32 * 100, 100);
+
+  document.getElementById('ov-raw').textContent = rawGB.toFixed(1) + ' GB';
+  document.getElementById('ov-total').textContent = '~' + totalGB.toFixed(0) + ' GB';
+
+  const fits8  = rawGB <= 8;
+  const fits24 = rawGB <= 24;
+  const v8el = document.getElementById('ov-vram');
+  const v24el = document.getElementById('ov-vram24');
+  v8el.textContent  = fits8  ? '✓ Yes' : '✗ No';
+  v8el.className    = 'out-cell-val ' + (fits8  ? 'good' : 'danger');
+  v24el.textContent = fits24 ? '✓ Yes' : '✗ No';
+  v24el.className   = 'out-cell-val ' + (fits24 ? 'good' : 'danger');
+
+  document.getElementById('bar-vram8').style.width  = pct8 + '%';
+  document.getElementById('bar-vram24').style.width = pct24 + '%';
+  document.getElementById('bar-ram').style.width    = pct32 + '%';
+  document.getElementById('bv-vram8').textContent   = pct8  >= 100 ? 'overflow' : pct8.toFixed(0) + '%';
+  document.getElementById('bv-vram24').textContent  = pct24 >= 100 ? 'overflow' : pct24.toFixed(0) + '%';
+  document.getElementById('bv-ram').textContent     = pct32 >= 100 ? 'overflow' : pct32.toFixed(0) + '%';
+
+  let insight = '';
+  if (rawGB > 24) insight = 'This model doesn\'t fit in a 24 GB GPU at all. Try 4-bit quantization to bring it under the line.';
+  else if (rawGB > 8) insight = 'Fits in a high-end consumer GPU (24 GB) but not a typical gaming GPU (8 GB). 4-bit quantization would fit it in 8 GB.';
+  else insight = 'Fits in an 8 GB GPU at this precision. There\'s still room for the KV cache on most queries.';
+  document.getElementById('mem-insight').textContent = insight;
+}
+
+['sl-params','sl-bits'].forEach(id => document.getElementById(id).addEventListener('input', updateMemCalc));
+updateMemCalc();
+
+// ── Quantization calculator ──────────────────────────
+function updateQuant() {
+  const params = +document.getElementById('q-params').value;
+  document.getElementById('q-cv-params').textContent = params + 'B';
+
+  const fp32 = params * 4;
+  const fp16 = params * 2;
+  const int8 = params * 1;
+  const int4 = params * 0.5;
+  const int2 = params * 0.25;
+  const max = fp32;
+
+  const ids = ['fp32','fp16','int8','int4','int2'];
+  const vals = [fp32, fp16, int8, int4, int2];
+  const colors = ['red','blue','green','green','amber'];
+  ids.forEach((id, i) => {
+    document.getElementById('q-bar-' + id).style.width = (vals[i] / max * 100) + '%';
+    document.getElementById('q-val-' + id).textContent = vals[i].toFixed(1) + ' GB';
+  });
+
+  document.getElementById('q-saving').textContent = '4× smaller';
+  const risk = params >= 30 ? 'Low (large model)' : params >= 7 ? 'Low–medium' : 'Medium–high';
+  document.getElementById('q-risk').textContent = risk;
+}
+
+document.getElementById('q-params').addEventListener('input', updateQuant);
+updateQuant();
+
+// ── Offload latency estimator ────────────────────────
+function updateOffload() {
+  const totalLayers = +document.getElementById('ol-layers').value;
+  let gpuLayers = +document.getElementById('ol-gpu').value;
+  if (gpuLayers > totalLayers) { gpuLayers = totalLayers; document.getElementById('ol-gpu').value = gpuLayers; }
+  const bits = +document.getElementById('ol-bits').value;
+  const params = +document.getElementById('ol-params').value;
+
+  document.getElementById('ol-cv-layers').textContent = totalLayers;
+  document.getElementById('ol-cv-gpu').textContent = gpuLayers;
+  document.getElementById('ol-cv-bits').textContent = bits + '-bit';
+  document.getElementById('ol-cv-params').textContent = params + 'B';
+
+  const offloadLayers = totalLayers - gpuLayers;
+  const totalWeightGB = params * bits / 8;
+  const perLayerGB = totalWeightGB / totalLayers;
+  const gpuGB = gpuLayers * perLayerGB;
+  const xferGB = offloadLayers * perLayerGB;
+  const latencyMs = (xferGB / 10) * 1000; // PCIe ~10 GB/s
+
+  document.getElementById('tier-gpu-val').textContent = gpuLayers + ' layers (' + gpuGB.toFixed(1) + ' GB)';
+  document.getElementById('tier-ram-val').textContent = offloadLayers + ' layers (' + xferGB.toFixed(1) + ' GB)';
+  document.getElementById('tier-gpu').classList.toggle('active-tier', gpuLayers > 0);
+  document.getElementById('tier-ram').classList.toggle('active-tier', offloadLayers > 0);
+
+  document.getElementById('ol-vram').textContent = gpuGB.toFixed(1) + ' GB';
+  document.getElementById('ol-xfer').textContent = xferGB.toFixed(1) + ' GB';
+  document.getElementById('ol-latency').textContent = latencyMs < 100 ? latencyMs.toFixed(0) + ' ms' : (latencyMs/1000).toFixed(1) + ' s';
+  document.getElementById('ol-latency').className = 'out-cell-val ' + (latencyMs < 200 ? 'good' : latencyMs < 800 ? 'warn' : 'danger');
+
+  let usable = '';
+  if (latencyMs < 150) usable = 'Yes';
+  else if (latencyMs < 600) usable = 'Marginal';
+  else usable = 'No — too slow';
+  document.getElementById('ol-usable').textContent = usable;
+  document.getElementById('ol-usable').className = 'out-cell-val ' + (latencyMs < 150 ? 'good' : latencyMs < 600 ? 'warn' : 'danger');
+}
+
+['ol-layers','ol-gpu','ol-bits','ol-params'].forEach(id => document.getElementById(id).addEventListener('input', updateOffload));
+updateOffload();
+
+// ── MoE expert visualiser ────────────────────────────
+let moeActiveSet = new Set();
+
+function renderMoeGrid() {
+  const nExperts = +document.getElementById('moe-experts').value;
+  const k = Math.min(+document.getElementById('moe-k').value, nExperts);
+  document.getElementById('moe-cv-experts').textContent = nExperts;
+  document.getElementById('moe-cv-k').textContent = k;
+
+  const grid = document.getElementById('moe-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < nExperts; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'expert-cell';
+    cell.textContent = i + 1;
+    if (moeActiveSet.has(i)) {
+      cell.classList.add('active-expert');
+    } else {
+      cell.classList.add('inactive-expert');
+    }
+    grid.appendChild(cell);
+  }
+
+  document.getElementById('moe-total').textContent = nExperts;
+  document.getElementById('moe-active').textContent = moeActiveSet.size || k;
+  const ratio = (moeActiveSet.size || k) / nExperts * 100;
+  document.getElementById('moe-ratio').textContent = ratio.toFixed(0) + '%';
+  document.getElementById('moe-storage').textContent = '100%';
+}
+
+function pickRandomExperts(n, k) {
+  const arr = Array.from({length: n}, (_, i) => i);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return new Set(arr.slice(0, k));
+}
+
+document.getElementById('moe-next-btn').addEventListener('click', () => {
+  const n = +document.getElementById('moe-experts').value;
+  const k = Math.min(+document.getElementById('moe-k').value, n);
+  moeActiveSet = pickRandomExperts(n, k);
+  renderMoeGrid();
+});
+document.getElementById('moe-reset-btn').addEventListener('click', () => {
+  moeActiveSet = new Set();
+  renderMoeGrid();
+});
+['moe-experts','moe-k'].forEach(id => document.getElementById(id).addEventListener('input', () => { moeActiveSet = new Set(); renderMoeGrid(); }));
+renderMoeGrid();
+
+// ── Speculative decoding simulator ───────────────────
+let specAccepted = 0, specCalls = 0, specRejected = 0;
+const VOCAB = ['the','model','runs','on','CPU','GPU','tokens','are','generated','fast','memory','fits','layer','cache','weights'];
+
+function specStep() {
+  const k = +document.getElementById('spec-k').value;
+  const acc = +document.getElementById('spec-acc').value / 100;
+  document.getElementById('spec-cv-k').textContent = k + ' tokens';
+  document.getElementById('spec-cv-acc').textContent = (+document.getElementById('spec-acc').value) + '%';
+
+  const stream = document.getElementById('spec-stream');
+  specCalls++;
+
+  // Generate k draft tokens
+  const drafts = Array.from({length: k}, () => VOCAB[Math.floor(Math.random() * VOCAB.length)]);
+  // Verify — accept until first rejection
+  let accepted = 0;
+  let firstRejectIdx = -1;
+  for (let i = 0; i < k; i++) {
+    if (Math.random() < acc) accepted++;
+    else { firstRejectIdx = i; break; }
+  }
+
+  // Render draft phase briefly then update
+  drafts.forEach((w, i) => {
+    const span = document.createElement('span');
+    span.className = 'token draft';
+    span.textContent = w;
+    stream.appendChild(span);
+  });
+
+  setTimeout(() => {
+    const tokens = stream.querySelectorAll('.token.draft');
+    tokens.forEach((t, i) => {
+      if (i < accepted) {
+        t.className = 'token accept';
+        specAccepted++;
+      } else if (i === firstRejectIdx || (firstRejectIdx === -1 && i === accepted)) {
+        if (firstRejectIdx !== -1) {
+          t.className = 'token reject';
+          specRejected++;
+        }
+      } else {
+        t.remove();
+      }
+    });
+
+    // Add verifier correction token if there was a rejection
+    if (firstRejectIdx !== -1) {
+      const corr = document.createElement('span');
+      corr.className = 'token verify';
+      corr.textContent = VOCAB[Math.floor(Math.random() * VOCAB.length)];
+      stream.appendChild(corr);
+      specAccepted++;
+    }
+
+    document.getElementById('spec-accepted').textContent = specAccepted;
+    document.getElementById('spec-calls').textContent = specCalls;
+    document.getElementById('spec-rejected').textContent = specRejected;
+    const ratio = specCalls > 0 ? (specAccepted / specCalls).toFixed(1) : '—';
+    document.getElementById('spec-ratio').textContent = ratio;
+  }, 400);
+}
+
+document.getElementById('spec-step-btn').addEventListener('click', specStep);
+document.getElementById('spec-reset-btn').addEventListener('click', () => {
+  specAccepted = 0; specCalls = 0; specRejected = 0;
+  document.getElementById('spec-stream').innerHTML = '';
+  document.getElementById('spec-accepted').textContent = '0';
+  document.getElementById('spec-calls').textContent = '0';
+  document.getElementById('spec-rejected').textContent = '0';
+  document.getElementById('spec-ratio').textContent = '—';
+});
+['spec-k','spec-acc'].forEach(id => document.getElementById(id).addEventListener('input', () => {
+  document.getElementById('spec-cv-k').textContent = document.getElementById('spec-k').value + ' tokens';
+  document.getElementById('spec-cv-acc').textContent = document.getElementById('spec-acc').value + '%';
+}));
+
+// ── Quiz ─────────────────────────────────────────────
+const QUESTIONS = [
+  {
+    q: "An 8B model at FP16 precision requires ~16 GB for raw weights. You quantize to INT4. What is the new approximate raw weight size?",
+    opts: ["4 GB","8 GB","2 GB","16 GB — quantization doesn't change storage"],
+    correct: 0,
+    explain: "INT4 uses 0.5 bytes per parameter. 8B × 0.5 = 4 GB. The other options confuse bit-widths: INT8 gives 8 GB, INT2 gives 2 GB, and quantization absolutely does change storage — that's its purpose."
+  },
+  {
+    q: "You move 12 of a model's 32 layers to CPU RAM via offloading. The remaining 20 layers fit in VRAM. Each token generated requires reading the 12 offloaded layers (~6 GB total) over PCIe at ~10 GB/s. Approximately how long does the transfer alone take per token?",
+    opts: ["~600 ms","~60 ms","~6 ms","~6 s"],
+    correct: 0,
+    explain: "6 GB / 10 GB/s = 0.6 s = 600 ms. This is the transfer cost alone — GPU compute time is on top of this. ~60 ms would require 60 GB/s (PCIe 5.0 theoretical peak, not typical). 6 ms would require 1 TB/s (HBM-class bandwidth)."
+  },
+  {
+    q: "A Mixture of Experts model has 40B total parameters and 4B active parameters per token. At INT4 precision, approximately how much storage is needed for the weights?",
+    opts: ["~20 GB","~2 GB","~5 GB","~40 GB"],
+    correct: 0,
+    explain: "Storage is determined by total parameters, not active ones. 40B × 0.5 bytes (INT4) = 20 GB. The 4B active figure only tells you the per-token compute cost. All experts must be stored — the inactive ones are needed for future tokens."
+  },
+  {
+    q: "Speculative decoding uses a small draft model to propose k tokens, then the large model verifies all k in one pass. Why is that verification pass cheap compared to generating k tokens normally?",
+    opts: [
+      "The large model's cost is dominated by memory bandwidth — reading its weights — which is similar whether verifying k tokens in parallel or generating one",
+      "The draft model does most of the computation so the large model barely runs",
+      "Verification skips half the transformer layers",
+      "The KV cache is reused from the draft model's run"
+    ],
+    correct: 0,
+    explain: "During decoding, the bottleneck is bandwidth: the large model must read its full weight set for every forward pass. A verification pass reads the weights once and processes k tokens in parallel — nearly the same bandwidth cost as one generation step. The draft model's compute is cheap but is separate; the large model still runs fully."
+  },
+  {
+    q: "A distilled student model scores 94% on your evaluation benchmark, matching the teacher. You deploy it on a production task. Which scenario is most likely to expose the student's limits?",
+    opts: [
+      "An edge case outside the training distribution that the teacher handled through broad knowledge",
+      "Any query faster than 50 ms",
+      "A query with more than 512 tokens",
+      "Queries at low temperature (greedy decoding)"
+    ],
+    correct: 0,
+    explain: "Distillation transfers learned behaviour but not necessarily breadth. The student may have absorbed the patterns the benchmark covers while losing the teacher's rare-knowledge recall and generalisation to unseen distributions. Speed, length, and decoding temperature don't directly expose the depth limitation."
+  },
+  {
+    q: "You set 30% of a dense model's weights to zero (unstructured pruning). You measure inference time: it's unchanged. Why?",
+    opts: [
+      "Standard matrix operations process all entries regardless of whether they're zero; savings require a sparse execution engine or sparse tensor representation",
+      "The GPU must still write the zero values back to memory",
+      "The weights were already near-zero, so the model hadn't learned those paths",
+      "The KV cache offsets any compute savings"
+    ],
+    correct: 0,
+    explain: "Setting values to zero creates sparsity, but standard BLAS/CUDA kernels don't skip zero entries — they compute 0 × x = 0 just as they would any other multiplication. To benefit, you need a sparse matrix format (CSR, etc.) and an execution engine designed to exploit it. The other options describe real effects but don't explain the unchanged inference time."
+  }
+];
+
+let quizAnswered = new Set();
+let quizCorrect = 0;
+
+function renderQuiz() {
+  const container = document.getElementById('quiz-container');
+  QUESTIONS.forEach((q, qi) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-q';
+    div.innerHTML = `
+      <div class="q-text">${qi + 1}. ${q.q}</div>
+      <div class="quiz-options">
+        ${q.opts.map((o, oi) => `<button class="quiz-opt" data-qi="${qi}" data-oi="${oi}">${o}</button>`).join('')}
+      </div>
+      <div class="quiz-explain" id="qex-${qi}">${q.explain}</div>
+    `;
+    container.appendChild(div);
+  });
+
+  document.querySelectorAll('.quiz-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const qi = +btn.dataset.qi;
+      const oi = +btn.dataset.oi;
+      if (quizAnswered.has(qi)) return;
+      quizAnswered.add(qi);
+
+      const allOpts = document.querySelectorAll(`.quiz-opt[data-qi="${qi}"]`);
+      allOpts.forEach(b => b.disabled = true);
+      allOpts[QUESTIONS[qi].correct].classList.add('correct');
+      if (oi !== QUESTIONS[qi].correct) btn.classList.add('wrong');
+      else quizCorrect++;
+
+      document.getElementById('qex-' + qi).classList.add('show');
+
+      if (quizAnswered.size === QUESTIONS.length) {
+        const score = document.getElementById('quiz-score');
+        score.style.display = 'block';
+        score.textContent = `Score: ${quizCorrect} / ${QUESTIONS.length}`;
+      }
+    });
+  });
+}
+
+renderQuiz();
+</script>
+</body>
+</html>
