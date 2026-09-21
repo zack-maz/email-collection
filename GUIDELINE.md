@@ -237,11 +237,19 @@ On first visit (no `localStorage` key present), the page fetches [`progress.json
 }
 ```
 
-**To sync to the repo:** update `progress.json` manually to match your current state and commit it. Future first-time visitors (or visitors who clear storage) will see that state. Email IDs follow the subtab key convention: `bbg-0`, `bbg-1`, `semi-0`, `semi-1`, `semi-2`.
+**To sync to the repo:** update `progress.json` manually to match your current state and commit it. Future first-time visitors (or visitors who clear storage) will see that state. Email IDs follow the subtab key convention: `bbg-0`, `bbg-1`, `semi-0`, `semi-1`, `semi-2`, `semi-3`.
 
 ---
 
-## 9. Metadata Conventions
+## 9. Sort Order
+
+All email lists — the **All panel**, and each **source panel's subtab bar** — are sorted **newest to oldest** by publication date. The `post-num` index in the All panel reflects this order (01 = most recent).
+
+When ties exist (same publication date), preserve the original insertion order within the tie group.
+
+---
+
+## 10. Metadata Conventions
 
 Every resource has a fixed set of metadata displayed in the hero section. These fields must be present and accurate on every page.
 

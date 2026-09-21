@@ -202,7 +202,7 @@
     <p>Technical deep-dives from newsletters, papers, and blogs — made interactive.</p>
     <div class="sub">
       <span class="label">Resources</span>
-      <span class="val">5</span>
+      <span class="val">6</span>
       <span class="label" style="margin-left:12px;">Sources</span>
       <span class="val">2</span>
     </div>
@@ -219,16 +219,28 @@
     </button>
   </div>
 
-  <!-- ══ ALL panel ══ -->
+  <!-- ══ ALL panel ══ (newest → oldest) -->
   <div class="tab-panel active fade-in" id="panel-all">
 
-    <!-- ByteByteGo -->
+    <!-- SemiAnalysis -->
     <div class="source-group">
-      <div class="source-label bbg"><div class="dot"></div>ByteByteGo</div>
+      <div class="source-label semi"><div class="dot"></div>SemiAnalysis</div>
       <div class="post-list">
+        <div class="post-row" data-id="semi-3">
+          <a class="post-row-link" href="semianalysis/computation_and_data_movement_for_inference/index.html">
+            <span class="post-num">01</span>
+            <span class="post-body">
+              <span class="post-title">Computation and Data Movement for Inference<svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E8EBED" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></span>
+              <span class="post-desc">Four operating regimes, three parallelism axes, one KV-cache hierarchy — and the tradeoff between aggregated and disaggregated MoE serving.</span>
+              <span class="post-date">Sep 21, 2026</span>
+            </span>
+          </a>
+          <span class="status-pill" data-id="semi-3" data-status="unread">unread</span>
+          <span class="post-tag">SA</span>
+        </div>
         <div class="post-row" data-id="bbg-0">
           <a class="post-row-link" href="bytebytego/api_concepts_every_software_engineer_should_know/index.html">
-            <span class="post-num">01</span>
+            <span class="post-num">02</span>
             <span class="post-body">
               <span class="post-title">API Concepts Every Software Engineer Should Know<svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E8EBED" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></span>
               <span class="post-desc">HTTP methods, status codes, REST vs GraphQL vs gRPC, OAuth 2.0, JWT deep-dive, rate limiting, idempotency — with an interactive playground and quiz.</span>
@@ -238,9 +250,21 @@
           <span class="status-pill" data-id="bbg-0" data-status="unread">unread</span>
           <span class="post-tag">EP226</span>
         </div>
+        <div class="post-row" data-id="semi-2">
+          <a class="post-row-link" href="semianalysis/engrams_embedding_entendre_codesign/index.html">
+            <span class="post-num">03</span>
+            <span class="post-body">
+              <span class="post-title">Engrams Embedding Entendre<svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E8EBED" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></span>
+              <span class="post-desc">How DeepSeek's n-gram memory tables reduce HBM pressure, why DRAM offloading matches HBM performance, and what breaks when you pull Engram out of a trained model.</span>
+              <span class="post-date">Sep 18, 2026</span>
+            </span>
+          </a>
+          <span class="status-pill" data-id="semi-2" data-status="unread">unread</span>
+          <span class="post-tag">SA</span>
+        </div>
         <div class="post-row" data-id="bbg-1">
           <a class="post-row-link" href="bytebytego/how_llms_find_a_needle_in_a_haystack/index.html">
-            <span class="post-num">02</span>
+            <span class="post-num">04</span>
             <span class="post-body">
               <span class="post-title">How LLMs Find a Needle in a Haystack<svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E8EBED" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></span>
               <span class="post-desc">RAG pipelines, vector search, HNSW indexing, chunking strategies, metadata filtering — with a live embedding visualiser and recall tuner.</span>
@@ -250,16 +274,9 @@
           <span class="status-pill" data-id="bbg-1" data-status="unread">unread</span>
           <span class="post-tag">BBG</span>
         </div>
-      </div>
-    </div>
-
-    <!-- SemiAnalysis -->
-    <div class="source-group">
-      <div class="source-label semi"><div class="dot"></div>SemiAnalysis</div>
-      <div class="post-list">
         <div class="post-row" data-id="semi-0">
           <a class="post-row-link" href="semianalysis/a_brain_too_big_to_carry/index.html">
-            <span class="post-num">03</span>
+            <span class="post-num">05</span>
             <span class="post-body">
               <span class="post-title">A Brain Too Big to Carry<svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E8EBED" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></span>
               <span class="post-desc">On-device vs datacenter inference for robot AI — latency budgets, silicon economics, the network wall, and TCO tradeoffs at fleet scale.</span>
@@ -271,7 +288,7 @@
         </div>
         <div class="post-row" data-id="semi-1">
           <a class="post-row-link" href="semianalysis/vera_rubin_nvl72_agentic_inference/index.html">
-            <span class="post-num">04</span>
+            <span class="post-num">06</span>
             <span class="post-body">
               <span class="post-title">Vera Rubin NVL72 Agentic Inference<svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E8EBED" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></span>
               <span class="post-desc">67× better performance per dollar on agentic workloads, Jensen sandbagging again, revenue per gigawatt, and why the more you buy the more you earn.</span>
@@ -279,18 +296,6 @@
             </span>
           </a>
           <span class="status-pill" data-id="semi-1" data-status="unread">unread</span>
-          <span class="post-tag">SA</span>
-        </div>
-        <div class="post-row" data-id="semi-2">
-          <a class="post-row-link" href="semianalysis/engrams_embedding_entendre_codesign/index.html">
-            <span class="post-num">05</span>
-            <span class="post-body">
-              <span class="post-title">Engrams Embedding Entendre<svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#E8EBED" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></span>
-              <span class="post-desc">How DeepSeek's n-gram memory tables reduce HBM pressure, why DRAM offloading matches HBM performance, and what breaks when you pull Engram out of a trained model.</span>
-              <span class="post-date">Sep 18, 2026</span>
-            </span>
-          </a>
-          <span class="status-pill" data-id="semi-2" data-status="unread">unread</span>
           <span class="post-tag">SA</span>
         </div>
       </div>
@@ -331,15 +336,42 @@
     </div>
   </div><!-- /panel-bbg -->
 
-  <!-- ══ SemiAnalysis panel ══ -->
+  <!-- ══ SemiAnalysis panel ══ (newest → oldest) -->
   <div class="tab-panel fade-in" id="panel-semi">
     <div class="subtabs-bar" role="tablist" aria-label="SemiAnalysis emails">
-      <button class="subtab-btn active" role="tab" aria-selected="true"  data-source="semi" data-subtab="semi-0">Brain Too Big</button>
-      <button class="subtab-btn"        role="tab" aria-selected="false" data-source="semi" data-subtab="semi-1">Vera Rubin NVL72</button>
+      <button class="subtab-btn active" role="tab" aria-selected="true"  data-source="semi" data-subtab="semi-3">Computation &amp; Data Movement</button>
       <button class="subtab-btn"        role="tab" aria-selected="false" data-source="semi" data-subtab="semi-2">Engrams Embedding</button>
+      <button class="subtab-btn"        role="tab" aria-selected="false" data-source="semi" data-subtab="semi-0">Brain Too Big</button>
+      <button class="subtab-btn"        role="tab" aria-selected="false" data-source="semi" data-subtab="semi-1">Vera Rubin NVL72</button>
     </div>
 
-    <div class="subtab-panel active fade-in" id="subtab-semi-0">
+    <div class="subtab-panel active fade-in" id="subtab-semi-3">
+      <div class="email-detail">
+        <div class="email-title">Computation and Data Movement for Inference</div>
+        <div class="email-meta"><span>SemiAnalysis</span><span>SA</span><span>Sep 21, 2026</span></div>
+        <div class="email-desc">Four operating regimes, three parallelism axes, one KV-cache hierarchy — and the tradeoff between aggregated and disaggregated MoE serving.</div>
+        <a class="open-btn" href="semianalysis/computation_and_data_movement_for_inference/index.html">Open interactive<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></a>
+        <div class="progress-actions">
+          <button class="prog-btn" data-id="semi-3" data-action="read"><span class="btn-check">✓</span>Read</button>
+          <button class="prog-btn" data-id="semi-3" data-action="studied"><span class="btn-check">✓</span>Studied</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="subtab-panel fade-in" id="subtab-semi-2">
+      <div class="email-detail">
+        <div class="email-title">Engrams Embedding Entendre</div>
+        <div class="email-meta"><span>SemiAnalysis</span><span>SA</span><span>Sep 18, 2026</span></div>
+        <div class="email-desc">How DeepSeek's n-gram memory tables reduce HBM pressure, why DRAM offloading matches HBM performance, and what breaks when you pull Engram out of a trained model.</div>
+        <a class="open-btn" href="semianalysis/engrams_embedding_entendre_codesign/index.html">Open interactive<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></a>
+        <div class="progress-actions">
+          <button class="prog-btn" data-id="semi-2" data-action="read"><span class="btn-check">✓</span>Read</button>
+          <button class="prog-btn" data-id="semi-2" data-action="studied"><span class="btn-check">✓</span>Studied</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="subtab-panel fade-in" id="subtab-semi-0">
       <div class="email-detail">
         <div class="email-title">A Brain Too Big to Carry</div>
         <div class="email-meta"><span>SemiAnalysis</span><span>SA</span><span>Sep 14, 2026</span></div>
@@ -364,19 +396,6 @@
         </div>
       </div>
     </div>
-
-    <div class="subtab-panel fade-in" id="subtab-semi-2">
-      <div class="email-detail">
-        <div class="email-title">Engrams Embedding Entendre</div>
-        <div class="email-meta"><span>SemiAnalysis</span><span>SA</span><span>Sep 18, 2026</span></div>
-        <div class="email-desc">How DeepSeek's n-gram memory tables reduce HBM pressure, why DRAM offloading matches HBM performance, and what breaks when you pull Engram out of a trained model.</div>
-        <a class="open-btn" href="semianalysis/engrams_embedding_entendre_codesign/index.html">Open interactive<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></a>
-        <div class="progress-actions">
-          <button class="prog-btn" data-id="semi-2" data-action="read"><span class="btn-check">✓</span>Read</button>
-          <button class="prog-btn" data-id="semi-2" data-action="studied"><span class="btn-check">✓</span>Studied</button>
-        </div>
-      </div>
-    </div>
   </div><!-- /panel-semi -->
 
   <footer>
@@ -394,7 +413,7 @@
   // Progress state — localStorage + progress.json
   // ─────────────────────────────────────────────
   const LS_KEY = 'email-progress';
-  const EMAIL_IDS = ['bbg-0', 'bbg-1', 'semi-0', 'semi-1', 'semi-2'];
+  const EMAIL_IDS = ['bbg-0', 'bbg-1', 'semi-0', 'semi-1', 'semi-2', 'semi-3'];
 
   // Load state: localStorage takes priority; fall back to progress.json seed
   async function loadState() {
