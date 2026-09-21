@@ -203,7 +203,45 @@ If not: cut the ones that aren't.
 
 ---
 
-## 8. Metadata Conventions
+## 8. Progress Tracking
+
+Every email on the home page has two toggle states — **Read** and **Studied** — that persist across sessions.
+
+### States
+
+| State | Colour | Meaning |
+|---|---|---|
+| `unread` | muted grey | Default. Not yet opened. |
+| `read` | amber (`--warn`) | Opened and read through once. |
+| `studied` | green (`--good`) | Actively worked through — interactives used, quiz attempted. |
+
+Clicking an already-active button reverts the email to `unread`. Clicking `Studied` on a `read` email upgrades it; clicking `Read` on a `studied` email downgrades it.
+
+### Where it appears
+
+- **All panel — post row:** a `.status-pill` in the third grid column shows the current state as a bordered mono label.
+- **Source panel — subtab detail card:** a `.progress-actions` row below the "Open interactive" button contains a `Read` and a `Studied` `.prog-btn`. The active button is highlighted with a faint amber or green tint.
+
+### Persistence model
+
+Progress is stored in `localStorage` under the key `email-progress` as a flat JSON object: `{ "bbg-0": "studied", "semi-1": "read", ... }`.
+
+On first visit (no `localStorage` key present), the page fetches [`progress.json`](progress.json) as seed data. This file lives in the repo and is the canonical shared record. Its schema:
+
+```json
+{
+  "version": 1,
+  "emails": {
+    "<id>": { "status": "unread | read | studied" }
+  }
+}
+```
+
+**To sync to the repo:** update `progress.json` manually to match your current state and commit it. Future first-time visitors (or visitors who clear storage) will see that state. Email IDs follow the subtab key convention: `bbg-0`, `bbg-1`, `semi-0`, `semi-1`, `semi-2`.
+
+---
+
+## 9. Metadata Conventions
 
 Every resource has a fixed set of metadata displayed in the hero section. These fields must be present and accurate on every page.
 
