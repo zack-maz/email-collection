@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Concepts Every Software Engineer Should Know</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0A0A0A; color: #C9CDD2; font-family: 'Hanken Grotesk','Helvetica Neue',Arial,sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #E8EBED; text-decoration: none; }
+  a:hover { color: #FFFFFF; }
+
+  /* ── Rail ── */
+  .rail { position: fixed; left: 32px; top: 80px; bottom: 80px; width: 1px; background: #1E2227; pointer-events: none; z-index: 10; }
+  .rail-cap { position: fixed; left: 32px; top: 80px; width: 1px; height: 56px; background: #E8EBED; opacity: 0.7; pointer-events: none; z-index: 11; }
+  .rail-label { position: fixed; left: 44px; font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; letter-spacing: 0.06em; color: #7C848D; pointer-events: none; z-index: 11; }
+  .rail-label.l0 { top: 74px; }
+  .rail-label.l1 { top: 464px; }
+
+  /* ── Nav ── */
+  nav { display: flex; justify-content: space-between; align-items: center; height: 64px; padding: 0 80px; }
+  nav .wordmark { font-size: 14px; font-weight: 500; color: #E8EBED; }
+  nav .links { display: flex; gap: 28px; font-size: 14px; }
+  nav .links a { color: #C9CDD2; }
+  nav .links a.active { color: #E8EBED; }
+
+  /* ── Page shell ── */
+  .page { padding: 0 80px; }
+
+  /* ── Hero ── */
+  header.hero { padding: 56px 0 48px; border-bottom: 1px solid #1E2227; display: flex; flex-direction: column; gap: 14px; }
+  header.hero .eyebrow { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #7C848D; }
+  header.hero h1 { font-size: 44px; line-height: 1.1; font-weight: 500; letter-spacing: -0.02em; color: #E8EBED; max-width: 720px; text-wrap: pretty; }
+  header.hero p { max-width: 560px; font-size: 18px; line-height: 1.65; color: #C9CDD2; text-wrap: pretty; }
+  header.hero .meta-row { display: flex; align-items: baseline; gap: 24px; padding-top: 4px; }
+  header.hero .meta-item { display: flex; align-items: baseline; gap: 8px; }
+  header.hero .meta-label { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #7C848D; }
+  header.hero .meta-val { font-size: 14px; color: #C9CDD2; }
+
+  /* ── Section nav (tab bar) ── */
+  .sec-nav { display: flex; gap: 0; border-bottom: 1px solid #1E2227; margin-top: 48px; }
+  .sec-btn { background: none; border: none; border-bottom: 2px solid transparent; color: #7C848D; cursor: pointer; font-family: 'Hanken Grotesk',sans-serif; font-size: 14px; padding: 12px 0; margin-right: 28px; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
+  .sec-btn:hover { color: #C9CDD2; }
+  .sec-btn.active { color: #E8EBED; border-bottom-color: #E8EBED; }
+
+  /* ── Sections ── */
+  .section { display: none; padding: 48px 0; }
+  .section.active { display: block; }
+
+  /* ── Sub-tabs ── */
+  .tab-bar { display: flex; gap: 0; border-bottom: 1px solid #1E2227; margin-bottom: 32px; }
+  .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; color: #7C848D; cursor: pointer; font-family: 'Hanken Grotesk',sans-serif; font-size: 13px; padding: 10px 0; margin-right: 24px; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; }
+  .tab-btn:hover { color: #C9CDD2; }
+  .tab-btn.active { color: #7AA2F7; border-bottom-color: #7AA2F7; }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ── Typography in content ── */
+  .content h2 { font-size: 15px; font-weight: 500; color: #E8EBED; margin-bottom: 20px; }
+  .content h3 { font-size: 15px; font-weight: 500; color: #E8EBED; margin: 32px 0 16px; }
+  .content p { font-size: 15px; line-height: 1.65; color: #C9CDD2; max-width: 640px; margin-bottom: 16px; text-wrap: pretty; }
+
+  /* ── Hairline list rows ── */
+  .row-list { max-width: 860px; display: flex; flex-direction: column; border-bottom: 1px solid #1E2227; }
+  .row { display: grid; align-items: baseline; gap: 20px; padding: 14px 0; border-top: 1px solid #1E2227; }
+  .row-3 { grid-template-columns: 80px minmax(0,1fr) 80px; }
+  .row-4 { grid-template-columns: 80px minmax(0,1fr) 140px 80px; }
+  .row-num { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; color: #7C848D; }
+  .row-body { display: flex; flex-direction: column; gap: 4px; }
+  .row-title { font-size: 18px; line-height: 1.2; font-weight: 500; letter-spacing: -0.01em; color: #E8EBED; }
+  .row-desc { font-size: 14px; line-height: 1.45; color: #7C848D; max-width: 560px; }
+  .row-meta { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; color: #7C848D; text-align: right; }
+
+  /* ── Badges ── */
+  .badge { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; letter-spacing: 0.06em; display: inline-block; padding: 2px 8px; }
+  .badge-get  { color: #7AA2F7; }
+  .badge-post { color: #9ECE6A; }
+  .badge-put  { color: #E0AF68; }
+  .badge-patch{ color: #BB9AF7; }
+  .badge-del  { color: #F7768E; }
+  .badge-2xx  { color: #9ECE6A; }
+  .badge-3xx  { color: #7AA2F7; }
+  .badge-4xx  { color: #E0AF68; }
+  .badge-5xx  { color: #F7768E; }
+  .tag-safe   { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; color: #9ECE6A; }
+  .tag-unsafe { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; color: #7C848D; }
+
+  /* ── Code blocks ── */
+  pre { background: #0D0F12; border: 1px solid #1E2227; padding: 16px 20px; font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 12px; line-height: 1.7; color: #C9CDD2; overflow-x: auto; margin: 16px 0; max-width: 720px; }
+  .ic { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 12px; color: #7AA2F7; background: #0D0F12; border: 1px solid #1E2227; padding: 1px 6px; }
+
+  /* ── Tables ── */
+  .tbl { width: 100%; max-width: 860px; border-collapse: collapse; font-size: 13px; margin: 16px 0; }
+  .tbl th { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #7C848D; text-align: left; padding: 10px 16px 10px 0; border-bottom: 1px solid #1E2227; font-weight: 400; }
+  .tbl td { padding: 12px 16px 12px 0; border-bottom: 1px solid #1E2227; color: #C9CDD2; vertical-align: top; line-height: 1.5; }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl tr:hover td { color: #E8EBED; }
+
+  /* ── Callouts ── */
+  .note { border-left: 2px solid #1E2227; padding: 12px 16px; margin: 16px 0; max-width: 640px; }
+  .note .note-label { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #7C848D; margin-bottom: 6px; }
+  .note p { font-size: 14px; color: #C9CDD2; margin: 0; max-width: none; }
+  .note.warn { border-left-color: #E0AF68; }
+  .note.warn .note-label { color: #E0AF68; }
+  .note.good { border-left-color: #9ECE6A; }
+  .note.good .note-label { color: #9ECE6A; }
+  .note.info { border-left-color: #7AA2F7; }
+  .note.info .note-label { color: #7AA2F7; }
+
+  /* ── Flow nodes ── */
+  .flow { display: flex; align-items: center; gap: 0; flex-wrap: wrap; margin: 16px 0; }
+  .flow-node { background: #0D0F12; border: 1px solid #1E2227; padding: 8px 14px; font-size: 12px; text-align: center; }
+  .flow-node.hi { border-color: #7AA2F7; color: #7AA2F7; }
+  .flow-node.hi2 { border-color: #9ECE6A; color: #9ECE6A; }
+  .flow-node.hi3 { border-color: #E0AF68; color: #E0AF68; }
+  .flow-node.hi4 { border-color: #BB9AF7; color: #BB9AF7; }
+  .flow-arr { color: #7C848D; padding: 0 6px; font-size: 14px; }
+
+  /* ── Playground ── */
+  .pg { background: #0D0F12; border: 1px solid #1E2227; padding: 24px; margin: 24px 0; max-width: 860px; }
+  .pg-title { font-size: 14px; font-weight: 500; color: #E8EBED; margin-bottom: 4px; }
+  .pg-sub { font-size: 13px; color: #7C848D; margin-bottom: 16px; }
+  .input-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .input-row label { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #7C848D; }
+  select, input[type="text"], input[type="number"], textarea {
+    background: #0A0A0A; border: 1px solid #1E2227; color: #E8EBED;
+    font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 12px;
+    padding: 6px 10px;
+  }
+  select:focus, input:focus, textarea:focus { outline: none; border-color: #7AA2F7; }
+  .btn { background: none; border: 1px solid #1E2227; color: #C9CDD2; font-family: 'Hanken Grotesk',sans-serif; font-size: 13px; padding: 6px 16px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+  .btn:hover { border-color: #E8EBED; color: #E8EBED; }
+  .btn.primary { border-color: #7AA2F7; color: #7AA2F7; }
+  .btn.primary:hover { background: #7AA2F7; color: #0A0A0A; }
+  .out-box { background: #0A0A0A; border: 1px solid #1E2227; padding: 16px; font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 12px; line-height: 1.7; white-space: pre-wrap; word-break: break-all; min-height: 80px; color: #C9CDD2; margin-top: 12px; }
+
+  /* ── Quiz ── */
+  .quiz-q { font-size: 18px; line-height: 1.45; font-weight: 500; color: #E8EBED; margin-bottom: 20px; max-width: 640px; }
+  .quiz-opt { border: 1px solid #1E2227; padding: 12px 16px; margin-bottom: 8px; cursor: pointer; font-size: 14px; color: #C9CDD2; max-width: 640px; transition: border-color 0.15s, color 0.15s; }
+  .quiz-opt:hover { border-color: #7AA2F7; color: #E8EBED; }
+  .quiz-opt.correct { border-color: #9ECE6A; color: #9ECE6A; cursor: default; }
+  .quiz-opt.wrong   { border-color: #F7768E; color: #F7768E; cursor: default; }
+  .quiz-opt.disabled{ cursor: default; pointer-events: none; }
+  .quiz-explain { border-left: 2px solid #7AA2F7; padding: 12px 16px; margin-top: 12px; font-size: 14px; line-height: 1.6; color: #7C848D; display: none; max-width: 640px; }
+  .quiz-explain.show { display: block; }
+  .quiz-counter { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 11px; letter-spacing: 0.06em; color: #7C848D; margin-bottom: 24px; }
+  .progress-rail { background: #1E2227; height: 1px; margin-bottom: 32px; max-width: 640px; }
+  .progress-fill { background: #7AA2F7; height: 1px; transition: width 0.4s; }
+  .quiz-score { text-align: center; padding: 48px 0; }
+  .quiz-score .big { font-size: 72px; line-height: 1; font-weight: 500; letter-spacing: -0.03em; color: #E8EBED; margin-bottom: 12px; }
+  .quiz-score p { font-size: 18px; color: #7C848D; }
+
+  /* ── Footer ── */
+  footer { margin: 64px 0 0; padding: 20px 0 40px; border-top: 1px solid #1E2227; display: flex; justify-content: space-between; align-items: center; }
+  footer .links { display: flex; gap: 28px; font-size: 14px; }
+  footer .links a { display: flex; align-items: center; gap: 6px; color: #C9CDD2; }
+  footer .meta { display: flex; gap: 24px; font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: 12px; letter-spacing: 0.04em; color: #7C848D; }
+
+  /* ── Animations ── */
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .rise { animation: rise 700ms cubic-bezier(.2,.7,.2,1) both; }
+  @media (prefers-reduced-motion: reduce) { .rise { animation: none; } }
+
+  /* ── Responsive ── */
+  @media (max-width: 720px) {
+    .rail, .rail-cap, .rail-label { left: 11px; }
+    nav, .page { padding: 0 24px; }
+    header.hero h1 { font-size: 28px; }
+    header.hero p { font-size: 16px; }
+    .row-4 { grid-template-columns: 56px minmax(0,1fr); }
+    .row-meta, .row:nth-child(4) { display: none; }
+    footer { flex-direction: column; gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="rail"></div>
+<div class="rail-cap"></div>
+<div class="rail-label l0">L 00</div>
+<div class="rail-label l1">L 01</div>
+
+<nav>
+  <a href="../../index.html" style="font-size:14px;font-weight:500;color:#E8EBED;">ByteByteGo</a>
+  <div class="links">
+    <a href="../../index.html">Emails</a>
+    <a href="#" class="active">EP226</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <header class="hero rise">
+    <span class="eyebrow">EP226 · API Concepts</span>
+    <h1>API Concepts Every Software Engineer Should Know</h1>
+    <p>From HTTP semantics to OAuth flows — a technical deep-dive with interactive tools and a quiz.</p>
+    <div class="meta-row">
+      <div class="meta-item"><span class="meta-label">Source</span><span class="meta-val">ByteByteGo Newsletter</span></div>
+      <div class="meta-item"><span class="meta-label">Sections</span><span class="meta-val">5</span></div>
+      <div class="meta-item"><span class="meta-label">Quiz</span><span class="meta-val">10 questions</span></div>
+    </div>
+  </header>
+
+  <!-- Section nav -->
+  <div class="sec-nav">
+    <button class="sec-btn active" onclick="showSec('http')">HTTP</button>
+    <button class="sec-btn" onclick="showSec('design')">Design</button>
+    <button class="sec-btn" onclick="showSec('styles')">REST · GraphQL · gRPC</button>
+    <button class="sec-btn" onclick="showSec('security')">Security</button>
+    <button class="sec-btn" onclick="showSec('reliability')">Reliability</button>
+    <button class="sec-btn" onclick="showSec('playground')">Playground</button>
+    <button class="sec-btn" onclick="showSec('quiz')">Quiz</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════ HTTP ══ -->
+  <div id="sec-http" class="section active content">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('http','methods')">Methods</button>
+      <button class="tab-btn" onclick="switchTab('http','status')">Status Codes</button>
+      <button class="tab-btn" onclick="switchTab('http','anatomy')">Anatomy</button>
+      <button class="tab-btn" onclick="switchTab('http','headers')">Headers</button>
+    </div>
+
+    <div id="http-methods" class="tab-pane active">
+      <h2>HTTP Methods — Semantics Matter</h2>
+      <p>Methods carry <strong style="color:#E8EBED">safety</strong> and <strong style="color:#E8EBED">idempotency</strong> guarantees. Caches, proxies, and retry logic all depend on them.</p>
+      <div class="row-list" style="margin-top:24px">
+        <div class="row row-4">
+          <span class="badge badge-get">GET</span>
+          <span class="row-body"><span class="row-title">Read / Retrieve</span><span class="row-desc">No side effects. Parameters in querystring. Body technically allowed but servers ignore it. Safe to cache.</span></span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9ECE6A">Safe · Idempotent</span>
+          <span></span>
+        </div>
+        <div class="row row-4">
+          <span class="badge badge-post">POST</span>
+          <span class="row-body"><span class="row-title">Create / Process</span><span class="row-desc">Creates a resource or triggers an action. Two identical POSTs create two resources — use an <span class="ic">Idempotency-Key</span> for safe retries.</span></span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7C848D">— · —</span>
+          <span></span>
+        </div>
+        <div class="row row-4">
+          <span class="badge badge-put">PUT</span>
+          <span class="row-body"><span class="row-title">Full Replace</span><span class="row-desc">Replaces the <em>entire</em> resource. Fields not in the body are deleted. Client must send a complete representation.</span></span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#E0AF68">— · Idempotent</span>
+          <span></span>
+        </div>
+        <div class="row row-4">
+          <span class="badge badge-patch">PATCH</span>
+          <span class="row-body"><span class="row-title">Partial Update</span><span class="row-desc">Only supplied fields change. Use JSON Patch (RFC 6902) for precision. Can be made idempotent with conditional requests.</span></span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7C848D">— · —*</span>
+          <span></span>
+        </div>
+        <div class="row row-4">
+          <span class="badge badge-del">DELETE</span>
+          <span class="row-body"><span class="row-title">Remove</span><span class="row-desc">Deleting an already-deleted resource should return 204 or 404 — not 500. Both are correct; pick one and be consistent.</span></span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#E0AF68">— · Idempotent</span>
+          <span></span>
+        </div>
+      </div>
+      <div class="note warn" style="margin-top:24px">
+        <div class="note-label">Common mistake</div>
+        <p>Using POST for reads — e.g. <span class="ic">POST /getUser</span> — breaks caching, pollutes logs, and violates HTTP semantics. Caches never cache POST responses.</p>
+      </div>
+      <pre>POST /orders HTTP/1.1
+Content-Type: application/json
+Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000
+
+{"item_id": "SKU-007", "quantity": 2}</pre>
+    </div>
+
+    <div id="http-status" class="tab-pane">
+      <h2>Status Codes — Use Them Precisely</h2>
+      <p>Returning <span class="ic">200 OK</span> with <span class="ic">{"error":"not found"}</span> breaks every client, proxy, and monitoring tool that relies on HTTP semantics.</p>
+      <table class="tbl" style="margin-top:24px">
+        <thead><tr><th>Code</th><th>Name</th><th>When to use</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-2xx">200</span></td><td>OK</td><td>Default success for GET / PUT / PATCH</td><td>Body contains result</td></tr>
+          <tr><td><span class="badge badge-2xx">201</span></td><td>Created</td><td>Resource was created (POST)</td><td>Include <span class="ic">Location</span> header</td></tr>
+          <tr><td><span class="badge badge-2xx">202</span></td><td>Accepted</td><td>Async processing started</td><td>Return a job ID for polling</td></tr>
+          <tr><td><span class="badge badge-2xx">204</span></td><td>No Content</td><td>Success with no body (DELETE, actions)</td><td>Never return a body with 204</td></tr>
+          <tr><td><span class="badge badge-3xx">304</span></td><td>Not Modified</td><td>Response to <span class="ic">If-None-Match</span></td><td>Client uses cached copy — saves bandwidth</td></tr>
+          <tr><td><span class="badge badge-4xx">400</span></td><td>Bad Request</td><td>Malformed syntax, invalid JSON, missing field</td><td>Return which field failed and why</td></tr>
+          <tr><td><span class="badge badge-4xx">401</span></td><td>Unauthorized</td><td>Missing or invalid authentication</td><td>Means <em>unauthenticated</em>. Return <span class="ic">WWW-Authenticate</span></td></tr>
+          <tr><td><span class="badge badge-4xx">403</span></td><td>Forbidden</td><td>Authenticated but not authorized</td><td>Server knows who you are; you lack permission</td></tr>
+          <tr><td><span class="badge badge-4xx">404</span></td><td>Not Found</td><td>Resource doesn't exist</td><td>Also used to hide existence of resources</td></tr>
+          <tr><td><span class="badge badge-4xx">409</span></td><td>Conflict</td><td>Duplicate resource, optimistic locking failure</td><td>Client must resolve before retrying</td></tr>
+          <tr><td><span class="badge badge-4xx">422</span></td><td>Unprocessable Entity</td><td>Valid syntax but semantic error</td><td>Prefer over 400 for validation failures</td></tr>
+          <tr><td><span class="badge badge-4xx">429</span></td><td>Too Many Requests</td><td>Rate limit exceeded</td><td>Return <span class="ic">Retry-After</span> and <span class="ic">X-RateLimit-*</span></td></tr>
+          <tr><td><span class="badge badge-5xx">500</span></td><td>Internal Server Error</td><td>Unhandled exception</td><td>Never leak stack traces; return a correlation ID</td></tr>
+          <tr><td><span class="badge badge-5xx">502</span></td><td>Bad Gateway</td><td>Upstream returned invalid response</td><td>Usually a proxy / LB error</td></tr>
+          <tr><td><span class="badge badge-5xx">503</span></td><td>Service Unavailable</td><td>Overloaded or in maintenance</td><td>Return <span class="ic">Retry-After</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="http-anatomy" class="tab-pane">
+      <h2>Request / Response Anatomy</h2>
+      <pre>POST /api/v2/orders HTTP/1.1          ← method + path + version
+Host: api.example.com                  ← required in HTTP/1.1
+Content-Type: application/json         ← how to parse the body
+Accept: application/json               ← format the client wants back
+Authorization: Bearer eyJhbGci...      ← auth token
+Idempotency-Key: 550e8400-e29b-41d4   ← safe retry dedup key
+X-Request-ID: req_abc123              ← correlation ID for tracing
+                                       ← blank line separates headers
+{
+  "item_id": "SKU-007",
+  "quantity": 2
+}</pre>
+      <pre>HTTP/1.1 201 Created
+Content-Type: application/json
+Location: /api/v2/orders/ORD-9981     ← URL of new resource
+X-Request-ID: req_abc123
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 873
+X-RateLimit-Reset: 1720000000        ← unix epoch window reset
+Cache-Control: no-store
+
+{
+  "id": "ORD-9981",
+  "status": "pending",
+  "created_at": "2026-09-19T10:00:00Z"
+}</pre>
+    </div>
+
+    <div id="http-headers" class="tab-pane">
+      <h2>Essential Headers</h2>
+      <table class="tbl" style="margin-top:24px">
+        <thead><tr><th>Header</th><th>Dir</th><th>Purpose</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td><span class="ic">Content-Type</span></td><td>Both</td><td>Media type of the body</td><td><span class="ic">application/json</span></td></tr>
+          <tr><td><span class="ic">Accept</span></td><td>Req</td><td>Acceptable response formats</td><td><span class="ic">application/json</span></td></tr>
+          <tr><td><span class="ic">Authorization</span></td><td>Req</td><td>Credentials</td><td><span class="ic">Bearer &lt;jwt&gt;</span></td></tr>
+          <tr><td><span class="ic">Cache-Control</span></td><td>Both</td><td>Caching directives</td><td><span class="ic">max-age=3600, must-revalidate</span></td></tr>
+          <tr><td><span class="ic">ETag</span></td><td>Res</td><td>Resource version fingerprint</td><td><span class="ic">"abc123"</span></td></tr>
+          <tr><td><span class="ic">If-None-Match</span></td><td>Req</td><td>Conditional GET (cache validation)</td><td><span class="ic">"abc123"</span></td></tr>
+          <tr><td><span class="ic">Idempotency-Key</span></td><td>Req</td><td>Deduplicate retried POST / PATCH</td><td><span class="ic">uuid-v4</span></td></tr>
+          <tr><td><span class="ic">Retry-After</span></td><td>Res</td><td>Seconds to wait before retrying</td><td><span class="ic">30</span></td></tr>
+          <tr><td><span class="ic">X-Request-ID</span></td><td>Both</td><td>Distributed tracing correlation</td><td><span class="ic">req_abc123</span></td></tr>
+          <tr><td><span class="ic">X-RateLimit-Remaining</span></td><td>Res</td><td>Remaining requests this window</td><td><span class="ic">873</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ DESIGN ══ -->
+  <div id="sec-design" class="section content">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('design','naming')">Naming</button>
+      <button class="tab-btn" onclick="switchTab('design','pagination')">Pagination</button>
+      <button class="tab-btn" onclick="switchTab('design','versioning')">Versioning</button>
+      <button class="tab-btn" onclick="switchTab('design','errors')">Error Formats</button>
+    </div>
+
+    <div id="design-naming" class="tab-pane active">
+      <h2>Resource Naming Rules</h2>
+      <table class="tbl" style="margin-top:24px">
+        <thead><tr><th>Rule</th><th>Correct</th><th>Incorrect</th></tr></thead>
+        <tbody>
+          <tr><td>Nouns not verbs — method is the verb</td><td><span class="ic">POST /orders</span></td><td><span class="ic">POST /createOrder</span></td></tr>
+          <tr><td>Plural collections, item by ID</td><td><span class="ic">/users/42</span></td><td><span class="ic">/user/42</span></td></tr>
+          <tr><td>Hierarchy max 2 levels deep</td><td><span class="ic">/users/42/orders</span></td><td><span class="ic">/users/42/orders/9/items/3</span></td></tr>
+          <tr><td>kebab-case paths, snake_case JSON</td><td><span class="ic">/order-items</span> · <span class="ic">"order_id"</span></td><td><span class="ic">/orderItems</span> · <span class="ic">"orderId"</span></td></tr>
+          <tr><td>Actions as sub-resources</td><td><span class="ic">POST /orders/9/cancel</span></td><td><span class="ic">POST /cancelOrder?id=9</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="design-pagination" class="tab-pane">
+      <h2>Pagination Strategies</h2>
+      <p>Never return unbounded collections. Choose based on your access pattern.</p>
+      <table class="tbl" style="margin-top:24px">
+        <thead><tr><th>Strategy</th><th>Mechanism</th><th>Good for</th><th>Problem</th></tr></thead>
+        <tbody>
+          <tr><td>Offset / Limit</td><td><span class="ic">?offset=20&limit=10</span></td><td>Simple UIs, known total count</td><td>Skips/dupes on concurrent inserts; slow at large offsets</td></tr>
+          <tr><td>Cursor-based</td><td><span class="ic">?after=cursor_xyz</span></td><td>Feeds, real-time data, large tables</td><td>No random access; can't jump to page 5</td></tr>
+          <tr><td>Keyset</td><td><span class="ic">?after_id=9981</span></td><td>Stable ordered datasets</td><td>Requires consistent sort key; no total count</td></tr>
+          <tr><td>Page number</td><td><span class="ic">?page=3&per_page=20</span></td><td>Legacy UIs</td><td>Same as offset; misleading total-pages as data changes</td></tr>
+        </tbody>
+      </table>
+      <div class="note info" style="margin-top:16px">
+        <div class="note-label">Cursor internals</div>
+        <p>A cursor is typically <span class="ic">btoa(JSON.stringify({id: 9981}))</span>. The server decodes it and adds <span class="ic">WHERE id &gt; 9981</span>. Opaque to the client — never rely on its format.</p>
+      </div>
+      <pre>{
+  "data": [ ... ],
+  "pagination": {
+    "cursor": "eyJpZCI6OTk4MX0",  // opaque base64 last-item key
+    "has_more": true,
+    "total": null                  // expensive to compute — omit
+  },
+  "_links": {
+    "next": "/users?after=eyJpZCI6OTk4MX0&limit=20"
+  }
+}</pre>
+    </div>
+
+    <div id="design-versioning" class="tab-pane">
+      <h2>API Versioning Strategies</h2>
+      <table class="tbl" style="margin-top:24px">
+        <thead><tr><th>Strategy</th><th>Example</th><th>Pros</th><th>Cons</th></tr></thead>
+        <tbody>
+          <tr><td>URL path</td><td><span class="ic">/v2/users</span></td><td>Obvious, browser-testable, cache-friendly</td><td>URL should identify resource, not schema</td></tr>
+          <tr><td>Query param</td><td><span class="ic">?version=2</span></td><td>Optional, backward-compatible default</td><td>Easily forgotten; poor cache keys</td></tr>
+          <tr><td>Accept header</td><td><span class="ic">application/vnd.api+json;v=2</span></td><td>RESTfully correct, clean URLs</td><td>Harder to test, less discoverable</td></tr>
+          <tr><td>Custom header (Stripe)</td><td><span class="ic">API-Version: 2026-09-01</span></td><td>Date-based, clean URLs</td><td>Non-standard; clients must know the header</td></tr>
+        </tbody>
+      </table>
+      <h3>Breaking vs Non-breaking</h3>
+      <div class="note good">
+        <div class="note-label">Non-breaking — no version bump needed</div>
+        <p>Adding optional response fields · Adding optional request params · Adding endpoints · Adding new enum values</p>
+      </div>
+      <div class="note warn" style="margin-top:12px">
+        <div class="note-label">Breaking — require a version bump</div>
+        <p>Renaming or removing fields · Changing a field type · Changing an HTTP method · Making optional fields required · Changing error structure</p>
+      </div>
+    </div>
+
+    <div id="design-errors" class="tab-pane">
+      <h2>Structured Error Responses</h2>
+      <p>Errors are part of your API contract. Inconsistent error formats force clients to write bespoke parsing logic for every failure.</p>
+      <h3>RFC 7807 — Problem Details (recommended standard)</h3>
+      <pre>HTTP/1.1 422 Unprocessable Entity
+Content-Type: application/problem+json
+
+{
+  "type": "https://api.example.com/errors/validation-failed",
+  "title": "Validation Failed",
+  "status": 422,
+  "detail": "The request body contains invalid fields.",
+  "instance": "/orders/validate#req_abc123",
+  "errors": [
+    {
+      "field": "quantity",
+      "code": "out_of_range",
+      "message": "Must be between 1 and 100",
+      "received": -5
+    }
+  ]
+}</pre>
+      <div class="note good">
+        <div class="note-label">Always include</div>
+        <p>Machine-readable error code · human-readable message · correlation / request ID · field-level detail for validation errors</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ STYLES ══ -->
+  <div id="sec-styles" class="section content">
+    <h2>REST · GraphQL · gRPC · WebSockets</h2>
+    <p>Each protocol solves a different problem. The wrong choice creates friction that compounds over time.</p>
+    <table class="tbl" style="margin-top:24px">
+      <thead><tr><th>Feature</th><th>REST</th><th>GraphQL</th><th>gRPC</th><th>WebSocket</th></tr></thead>
+      <tbody>
+        <tr><td>Protocol</td><td>HTTP/1.1+</td><td>HTTP/1.1+</td><td>HTTP/2</td><td>WS (TCP upgrade)</td></tr>
+        <tr><td>Data format</td><td>JSON / XML</td><td>JSON</td><td>Protobuf (binary)</td><td>Any (JSON common)</td></tr>
+        <tr><td>Schema</td><td>OpenAPI (opt)</td><td>SDL (required)</td><td>.proto (required)</td><td>None by default</td></tr>
+        <tr><td>Over / under-fetch</td><td>Common</td><td>Eliminated</td><td>Eliminated</td><td>N/A</td></tr>
+        <tr><td>Streaming</td><td>SSE / chunked</td><td>Subscriptions</td><td>Native bi-directional</td><td>Native</td></tr>
+        <tr><td>Performance</td><td>Good</td><td>Good</td><td>Excellent (3–10×)</td><td>Low-latency</td></tr>
+        <tr><td>Browser support</td><td>Native</td><td>Native</td><td>grpc-web proxy</td><td>Native</td></tr>
+        <tr><td>Best for</td><td>Public APIs, CRUD</td><td>Complex data graphs</td><td>Internal services, mobile</td><td>Real-time, chat, games</td></tr>
+      </tbody>
+    </table>
+    <h3>gRPC — How Protobuf Works</h3>
+    <div class="flow">
+      <div class="flow-node hi">Define<br>.proto</div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node">Run<br>protoc</div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node hi2">Generated<br>stubs</div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node hi3">Binary<br>serialise</div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node hi4">HTTP/2<br>frames</div>
+    </div>
+    <pre>syntax = "proto3";
+
+service UserService {
+  rpc GetUser(GetUserRequest) returns (User);
+  rpc ListUsers(ListUsersRequest) returns (stream User); // server streaming
+}
+
+message User {
+  int64  id    = 1;
+  string name  = 2;
+  string email = 3;
+  repeated string roles = 4;
+}</pre>
+  </div>
+
+  <!-- ══════════════════════════════════════════ SECURITY ══ -->
+  <div id="sec-security" class="section content">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('sec','auth')">Auth Methods</button>
+      <button class="tab-btn" onclick="switchTab('sec','jwt')">JWT</button>
+      <button class="tab-btn" onclick="switchTab('sec','oauth')">OAuth 2.0</button>
+    </div>
+
+    <div id="sec-auth" class="tab-pane active">
+      <h2>Authentication Methods</h2>
+      <table class="tbl" style="margin-top:24px">
+        <thead><tr><th>Method</th><th>How it works</th><th>Best for</th><th>Risk</th></tr></thead>
+        <tbody>
+          <tr><td>API Key</td><td>Static secret in header</td><td>Server-to-server</td><td>No expiry, no user context, leaked = full access</td></tr>
+          <tr><td>Basic Auth</td><td>Base64(user:pass)</td><td>Internal tools</td><td>Credentials sent every request; base64 ≠ encryption</td></tr>
+          <tr><td>Session Cookie</td><td>Server stores session</td><td>Browser apps</td><td>CSRF; doesn't scale without a session store</td></tr>
+          <tr><td>JWT Bearer</td><td>Signed token with claims</td><td>SPAs, mobile, microservices</td><td>Can't revoke before expiry without a denylist</td></tr>
+          <tr><td>OAuth 2.0</td><td>Delegated access tokens</td><td>Third-party access, SSO</td><td>Complex; many footguns</td></tr>
+          <tr><td>mTLS</td><td>Both sides present certs</td><td>Internal microservices</td><td>Certificate management overhead</td></tr>
+        </tbody>
+      </table>
+      <div class="note warn" style="margin-top:16px">
+        <div class="note-label">API Key pitfall</div>
+        <p>Never put API keys in URLs — they appear in server logs and browser history. Always use the <span class="ic">Authorization</span> header or a custom request header.</p>
+      </div>
+    </div>
+
+    <div id="sec-jwt" class="tab-pane">
+      <h2>JWT — Structure &amp; Validation</h2>
+      <p>Three base64url-encoded JSON objects joined by dots. The signature is what makes it tamper-proof.</p>
+      <div class="flow" style="margin:16px 0">
+        <div class="flow-node hi" style="min-width:120px;text-align:center">Header<br><span style="font-size:11px;color:#7C848D">alg, typ, kid</span></div>
+        <div class="flow-arr">.</div>
+        <div class="flow-node hi2" style="min-width:120px;text-align:center">Payload<br><span style="font-size:11px;color:#7C848D">claims</span></div>
+        <div class="flow-arr">.</div>
+        <div class="flow-node hi3" style="min-width:120px;text-align:center">Signature<br><span style="font-size:11px;color:#7C848D">HMAC / RSA</span></div>
+      </div>
+      <pre>// Payload claims
+{
+  "sub": "usr_42",           // subject (user ID)
+  "iss": "auth.example.com", // issuer   — validate this
+  "aud": "api.example.com",  // audience — validate this
+  "iat": 1720000000,         // issued at
+  "exp": 1720003600,         // expiry (1 h later)
+  "jti": "uuid-v4",          // JWT ID  — for revocation
+  "scope": "read:users write:orders"
+}</pre>
+      <h3>Validation checklist</h3>
+      <div class="row-list" style="margin-top:0;max-width:640px">
+        <div class="row row-3"><span style="color:#9ECE6A;font-family:'JetBrains Mono',monospace;font-size:12px">✓</span><span class="row-desc">Verify <strong style="color:#E8EBED">signature</strong> using the correct public key (check <span class="ic">kid</span>)</span><span></span></div>
+        <div class="row row-3"><span style="color:#9ECE6A;font-family:'JetBrains Mono',monospace;font-size:12px">✓</span><span class="row-desc">Check <span class="ic">exp</span> — reject expired tokens</span><span></span></div>
+        <div class="row row-3"><span style="color:#9ECE6A;font-family:'JetBrains Mono',monospace;font-size:12px">✓</span><span class="row-desc">Check <span class="ic">iss</span> — must match your known issuer</span><span></span></div>
+        <div class="row row-3"><span style="color:#9ECE6A;font-family:'JetBrains Mono',monospace;font-size:12px">✓</span><span class="row-desc">Check <span class="ic">aud</span> — must match your service identifier</span><span></span></div>
+        <div class="row row-3"><span style="color:#F7768E;font-family:'JetBrains Mono',monospace;font-size:12px">✗</span><span class="row-desc">Never accept <span class="ic">"alg":"none"</span> — this disables signature verification entirely</span><span></span></div>
+        <div class="row row-3"><span style="color:#F7768E;font-family:'JetBrains Mono',monospace;font-size:12px">✗</span><span class="row-desc">Never trust the payload before verifying the signature</span><span></span></div>
+      </div>
+    </div>
+
+    <div id="sec-oauth" class="tab-pane">
+      <h2>OAuth 2.0 — Authorization Code + PKCE Flow</h2>
+      <p>The most secure flow for user-facing apps. Never use Implicit flow in modern apps.</p>
+      <div class="row-list" style="margin-top:24px;max-width:720px">
+        <div class="row" style="grid-template-columns:32px minmax(0,1fr);gap:16px">
+          <span class="row-num">01</span>
+          <span class="row-body"><span class="row-title">Client redirects to Auth Server</span>
+          <pre style="margin:8px 0 0">GET /authorize?response_type=code
+  &client_id=my_app
+  &scope=read:users
+  &state=csrf_token        ← CSRF protection
+  &code_challenge=S256hash ← PKCE (required for SPAs)</pre></span>
+        </div>
+        <div class="row" style="grid-template-columns:32px minmax(0,1fr);gap:16px">
+          <span class="row-num">02</span>
+          <span class="row-body"><span class="row-title">User authenticates &amp; consents</span><span class="row-desc">Auth server shows login + consent screen.</span></span>
+        </div>
+        <div class="row" style="grid-template-columns:32px minmax(0,1fr);gap:16px">
+          <span class="row-num">03</span>
+          <span class="row-body"><span class="row-title">Redirect back with authorization code</span>
+          <pre style="margin:8px 0 0">GET /callback?code=AUTH_CODE&state=csrf_token</pre></span>
+        </div>
+        <div class="row" style="grid-template-columns:32px minmax(0,1fr);gap:16px">
+          <span class="row-num">04</span>
+          <span class="row-body"><span class="row-title">Exchange code for tokens (server-side)</span>
+          <pre style="margin:8px 0 0">POST /token
+grant_type=authorization_code
+&code=AUTH_CODE
+&code_verifier=PKCE_verifier  ← proves ownership without a secret
+
+→ { "access_token": "eyJ...", "expires_in": 3600,
+    "refresh_token": "def50200..." }</pre></span>
+        </div>
+        <div class="row" style="grid-template-columns:32px minmax(0,1fr);gap:16px">
+          <span class="row-num">05</span>
+          <span class="row-body"><span class="row-title">Use access token</span>
+          <pre style="margin:8px 0 0">GET /users/me
+Authorization: Bearer eyJ...</pre></span>
+        </div>
+        <div class="row" style="grid-template-columns:32px minmax(0,1fr);gap:16px">
+          <span class="row-num">06</span>
+          <span class="row-body"><span class="row-title">Refresh when expired</span>
+          <pre style="margin:8px 0 0">POST /token
+grant_type=refresh_token&refresh_token=def50200...</pre></span>
+        </div>
+      </div>
+      <div class="note info" style="margin-top:16px">
+        <div class="note-label">Why PKCE for SPAs?</div>
+        <p>SPAs run in the browser — any <span class="ic">client_secret</span> is visible to users. PKCE proves code ownership via a hash of a random verifier, with no static secret required.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ RELIABILITY ══ -->
+  <div id="sec-reliability" class="section content">
+    <h2>Reliability Patterns</h2>
+    <p>These patterns are invisible when they work and catastrophic when they don't.</p>
+    <div class="row-list" style="margin-top:32px">
+      <div class="row" style="grid-template-columns:120px minmax(0,1fr);gap:20px;align-items:start">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:#7C848D;padding-top:2px">Timeouts</span>
+        <span class="row-body"><span class="row-title">Three distinct timeouts</span><span class="row-desc" style="max-width:none">Connection timeout (~3s) — time to establish TCP. Read timeout (~30s) — time between bytes. Request timeout (~60s) — total wall clock. Missing any one creates resource leaks.</span>
+        <pre style="margin:8px 0 0">const resp = await fetch(url, {
+  signal: AbortSignal.timeout(5000) // 5s total
+});</pre></span>
+      </div>
+      <div class="row" style="grid-template-columns:120px minmax(0,1fr);gap:20px;align-items:start">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:#7C848D;padding-top:2px">Retries</span>
+        <span class="row-body"><span class="row-title">Exponential backoff with jitter</span><span class="row-desc" style="max-width:none">Only retry idempotent operations or requests with <span class="ic">Idempotency-Key</span>. Jitter prevents thundering herds.</span>
+        <pre style="margin:8px 0 0">delay = min(base * 2^attempt + random(base), max_delay)
+// attempt 0: ~1s  attempt 1: ~2s  attempt 2: ~4s</pre></span>
+      </div>
+      <div class="row" style="grid-template-columns:120px minmax(0,1fr);gap:20px;align-items:start">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:#7C848D;padding-top:2px">Idempotency</span>
+        <span class="row-body"><span class="row-title">Server-side deduplication</span><span class="row-desc" style="max-width:none">Server stores <span class="ic">idempotency_key → response</span> for 24h. Same key arrives twice? Return the cached response. Enables safe retries on POST.</span></span>
+      </div>
+      <div class="row" style="grid-template-columns:120px minmax(0,1fr);gap:20px;align-items:start">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:#7C848D;padding-top:2px">Rate Limiting</span>
+        <span class="row-body"><span class="row-title">Token bucket · Sliding window · Fixed window</span><span class="row-desc" style="max-width:none">Token Bucket allows bursts. Fixed Window is simple but has boundary spikes. Sliding Window is smooth but more expensive. Always return <span class="ic">X-RateLimit-*</span> headers.</span></span>
+      </div>
+      <div class="row" style="grid-template-columns:120px minmax(0,1fr);gap:20px;align-items:start">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:#7C848D;padding-top:2px">Circuit Breaker</span>
+        <span class="row-body"><span class="row-title">Three states: Closed → Open → Half-Open</span><span class="row-desc" style="max-width:none">Prevents cascade failures in microservice chains.</span>
+        <pre style="margin:8px 0 0">CLOSED → error_rate > 50% → OPEN
+OPEN   → after timeout   → HALF_OPEN
+HALF_OPEN → success      → CLOSED
+HALF_OPEN → failure      → OPEN</pre></span>
+      </div>
+    </div>
+    <h3>Retry decision table</h3>
+    <table class="tbl" style="margin-top:16px">
+      <thead><tr><th>Status / error</th><th>Retry?</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Network timeout</td><td style="color:#E0AF68">Only if idempotent</td><td>Use idempotency key for POST</td></tr>
+        <tr><td>429 Too Many Requests</td><td style="color:#9ECE6A">Yes</td><td>Wait for <span class="ic">Retry-After</span></td></tr>
+        <tr><td>500 Internal Server Error</td><td style="color:#E0AF68">With backoff</td><td>Transient; cap at 3 attempts</td></tr>
+        <tr><td>502 / 503 / 504</td><td style="color:#9ECE6A">Yes</td><td>Infrastructure; usually transient</td></tr>
+        <tr><td>400 Bad Request</td><td style="color:#F7768E">No</td><td>Client bug — fix the request first</td></tr>
+        <tr><td>401 Unauthorized</td><td style="color:#E0AF68">Once</td><td>Refresh token, then retry once</td></tr>
+        <tr><td>403 Forbidden</td><td style="color:#F7768E">No</td><td>Permissions issue — retry won't help</td></tr>
+        <tr><td>404 Not Found</td><td style="color:#F7768E">No</td><td>Resource doesn't exist</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════ PLAYGROUND ══ -->
+  <div id="sec-playground" class="section content">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('pg','builder')">Request Builder</button>
+      <button class="tab-btn" onclick="switchTab('pg','jwtdec')">JWT Decoder</button>
+      <button class="tab-btn" onclick="switchTab('pg','ratelimit')">Rate Limiter</button>
+      <button class="tab-btn" onclick="switchTab('pg','backoff')">Backoff</button>
+    </div>
+
+    <div id="pg-builder" class="tab-pane active">
+      <div class="pg">
+        <div class="pg-title">HTTP Request Builder</div>
+        <div class="pg-sub">Compose a request and see its annotated raw form.</div>
+        <div class="input-row">
+          <select id="rb-method" onchange="buildRequest()"><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option></select>
+          <input type="text" id="rb-path" value="/api/v2/users/42" style="width:260px" oninput="buildRequest()">
+        </div>
+        <div class="input-row">
+          <label>Auth</label>
+          <select id="rb-auth" onchange="buildRequest()"><option value="">None</option><option value="bearer">Bearer JWT</option><option value="apikey">API Key</option><option value="basic">Basic Auth</option></select>
+          <label>Body</label>
+          <select id="rb-body" onchange="buildRequest()"><option value="">None</option><option value="json">JSON</option></select>
+        </div>
+        <div id="rb-output" class="out-box"></div>
+        <div id="rb-notes" style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#7C848D;line-height:1.8"></div>
+      </div>
+    </div>
+
+    <div id="pg-jwtdec" class="tab-pane">
+      <div class="pg">
+        <div class="pg-title">JWT Decoder</div>
+        <div class="pg-sub">Paste any JWT to inspect its claims. No data leaves your browser.</div>
+        <textarea id="jwt-in" style="width:100%;height:72px;resize:vertical" oninput="decodeJWT()"></textarea>
+        <div id="jwt-out" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <div id="pg-ratelimit" class="tab-pane">
+      <div class="pg">
+        <div class="pg-title">Token Bucket Simulator</div>
+        <div class="pg-sub">See which requests are allowed vs throttled.</div>
+        <div class="input-row">
+          <label>Bucket size</label><input type="number" id="rl-size" value="10" min="1" max="100" style="width:60px">
+          <label>Refill rate (req/s)</label><input type="number" id="rl-rate" value="2" min="1" max="20" style="width:60px">
+          <label>Burst requests</label><input type="number" id="rl-burst" value="15" min="1" max="50" style="width:60px">
+          <button class="btn primary" onclick="simRateLimit()">Simulate</button>
+        </div>
+        <div id="rl-out" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <div id="pg-backoff" class="tab-pane">
+      <div class="pg">
+        <div class="pg-title">Exponential Backoff Calculator</div>
+        <div class="pg-sub">Compute delays per attempt with full jitter.</div>
+        <div class="input-row">
+          <label>Base (ms)</label><input type="number" id="bo-base" value="1000" style="width:80px">
+          <label>Max (ms)</label><input type="number" id="bo-max" value="32000" style="width:80px">
+          <label>Attempts</label><input type="number" id="bo-attempts" value="8" min="1" max="15" style="width:60px">
+          <button class="btn primary" onclick="calcBackoff()">Calculate</button>
+        </div>
+        <div id="bo-out" style="margin-top:12px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ QUIZ ══ -->
+  <div id="sec-quiz" class="section content">
+    <h2>Knowledge Check</h2>
+    <p style="margin-bottom:32px">10 questions across all sections. Each has a detailed explanation.</p>
+    <div class="progress-rail"><div class="progress-fill" id="qprog" style="width:0%"></div></div>
+    <div id="quiz-wrap"></div>
+  </div>
+
+  <footer>
+    <div class="links">
+      <a href="../../index.html">← All emails</a>
+      <a href="https://bytebytego.com/p/ep226-api-concepts-every-software">Original post <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 11L11 5M6 5h5v5"></path></svg></a>
+    </div>
+    <div class="meta"><span>EP226</span><span>#bytebytego</span></div>
+  </footer>
+</div>
+
+<script>
+// ── Section switching ──────────────────────────────────────────
+function showSec(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  document.querySelectorAll('.sec-btn').forEach((b, i) => {
+    const ids = ['http','design','styles','security','reliability','playground','quiz'];
+    b.classList.toggle('active', ids[i] === id);
+  });
+  window.scrollTo(0, 0);
+}
+
+// ── Sub-tab switching ──────────────────────────────────────────
+function switchTab(group, tab) {
+  const paneId = group + '-' + tab;
+  const pane = document.getElementById(paneId);
+  if (!pane) return;
+  const parent = pane.parentElement;
+  parent.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  pane.classList.add('active');
+  const bar = parent.previousElementSibling;
+  if (bar && bar.classList.contains('tab-bar')) {
+    bar.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.toggle('active', b.getAttribute('onclick')?.includes("'" + tab + "'"));
+    });
+  }
+}
+
+// ── Request Builder ────────────────────────────────────────────
+function buildRequest() {
+  const method = document.getElementById('rb-method').value;
+  const path   = document.getElementById('rb-path').value || '/';
+  const auth   = document.getElementById('rb-auth').value;
+  const body   = document.getElementById('rb-body').value;
+  const idempotent = ['GET','PUT','DELETE'].includes(method);
+  const safe = method === 'GET';
+
+  let req = `${method} ${path} HTTP/1.1\nHost: api.example.com\nAccept: application/json`;
+  if (auth === 'bearer') req += '\nAuthorization: Bearer eyJhbGciOiJSUzI1NiJ9...';
+  if (auth === 'apikey') req += '\nX-API-Key: sk_live_abc123';
+  if (auth === 'basic')  req += '\nAuthorization: Basic dXNlcjpwYXNz';
+  if (body === 'json')   req += '\nContent-Type: application/json';
+  if (method === 'POST') req += '\nIdempotency-Key: ' + fakeUUID();
+  if (body === 'json')   req += '\n\n{\n  "name": "Alice",\n  "email": "alice@example.com"\n}';
+
+  document.getElementById('rb-output').textContent = req;
+  const notes = [];
+  if (safe) notes.push('✓ safe — no side effects, cacheable');
+  else      notes.push('— not safe — has side effects');
+  if (idempotent) notes.push('✓ idempotent — safe to retry');
+  else            notes.push('— not idempotent — use Idempotency-Key for safe retries');
+  if (method === 'POST') notes.push('↳ Idempotency-Key added — server should deduplicate for 24 h');
+  document.getElementById('rb-notes').innerHTML = notes.join('<br>');
+}
+
+function fakeUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+// ── JWT Decoder ────────────────────────────────────────────────
+function decodeJWT() {
+  const token = document.getElementById('jwt-in').value.trim();
+  const out   = document.getElementById('jwt-out');
+  if (!token) { out.innerHTML = ''; return; }
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    out.innerHTML = '<div class="note warn"><div class="note-label">Error</div><p>Not a valid JWT — must have exactly 3 dot-separated parts.</p></div>';
+    return;
+  }
+  try {
+    const header  = JSON.parse(atob(parts[0].replace(/-/g,'+').replace(/_/g,'/')));
+    const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+    const now     = Math.floor(Date.now() / 1000);
+    const expired = payload.exp && payload.exp < now;
+    const expDate = payload.exp ? new Date(payload.exp * 1000).toISOString() : null;
+
+    out.innerHTML = `
+      <pre style="color:#7AA2F7">${JSON.stringify(header, null, 2)}</pre>
+      <pre style="color:#9ECE6A;margin-top:8px">${JSON.stringify(payload, null, 2)}</pre>
+      ${expired
+        ? '<div class="note warn" style="margin-top:8px"><div class="note-label">Expired</div><p>Token expired at ' + expDate + '</p></div>'
+        : expDate
+          ? '<div class="note good" style="margin-top:8px"><div class="note-label">Valid until</div><p>' + expDate + '</p></div>'
+          : ''}
+      <div class="note info" style="margin-top:8px"><div class="note-label">Note</div><p>Signature is not verified here — client-side only. Always verify server-side with the public key.</p></div>
+    `;
+  } catch (e) {
+    out.innerHTML = '<div class="note warn"><div class="note-label">Decode error</div><p>' + e.message + '</p></div>';
+  }
+}
+
+// ── Rate Limiter ───────────────────────────────────────────────
+function simRateLimit() {
+  const size  = parseInt(document.getElementById('rl-size').value);
+  const rate  = parseInt(document.getElementById('rl-rate').value);
+  const burst = parseInt(document.getElementById('rl-burst').value);
+  let tokens = size, lastRefill = 0, results = [];
+
+  for (let i = 0; i < burst; i++) {
+    const now = i * 0.1;
+    tokens = Math.min(size, tokens + (now - lastRefill) * rate);
+    lastRefill = now;
+    if (tokens >= 1) { tokens--; results.push({ i: i+1, ok: true,  t: tokens.toFixed(1) }); }
+    else              { results.push({ i: i+1, ok: false, t: tokens.toFixed(1) }); }
+  }
+
+  const ok   = results.filter(r => r.ok).length;
+  const fail = results.filter(r => !r.ok).length;
+
+  document.getElementById('rl-out').innerHTML = `
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7C848D;margin-bottom:10px">
+      <span style="color:#9ECE6A">${ok} allowed</span> · <span style="color:#F7768E">${fail} throttled</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:12px">
+      ${results.map(r => `<span title="req ${r.i} — tokens left: ${r.t}" style="width:24px;height:24px;background:${r.ok ? '#1a3d2e' : '#3d1515'};border:1px solid ${r.ok ? '#9ECE6A' : '#F7768E'};display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:9px;color:${r.ok ? '#9ECE6A' : '#F7768E'}">${r.i}</span>`).join('')}
+    </div>
+    <div class="note info"><div class="note-label">Token Bucket</div><p>Bucket size <strong style="color:#E8EBED">${size}</strong>, refill at <strong style="color:#E8EBED">${rate} req/s</strong>. Burst of ${burst} requests sent 100ms apart. Hover a square to see remaining tokens.</p></div>
+  `;
+}
+
+// ── Backoff Calculator ─────────────────────────────────────────
+function calcBackoff() {
+  const base     = parseInt(document.getElementById('bo-base').value);
+  const max      = parseInt(document.getElementById('bo-max').value);
+  const attempts = parseInt(document.getElementById('bo-attempts').value);
+  let rows = [], cumulative = 0;
+
+  for (let i = 0; i < attempts; i++) {
+    const jitter = Math.random() * base;
+    const delay  = Math.min(base * Math.pow(2, i) + jitter, max);
+    cumulative  += delay;
+    rows.push({ n: i+1, delay: Math.round(delay), cum: Math.round(cumulative) });
+  }
+
+  const fmt = ms => ms >= 1000 ? (ms/1000).toFixed(1) + 's' : ms + 'ms';
+
+  document.getElementById('bo-out').innerHTML = `
+    <table class="tbl">
+      <thead><tr><th>Attempt</th><th>Delay</th><th>Cumulative</th><th></th></tr></thead>
+      <tbody>
+        ${rows.map(r => `<tr>
+          <td>${r.n}</td>
+          <td>${fmt(r.delay)}</td>
+          <td>${fmt(r.cum)}</td>
+          <td style="width:160px"><div style="height:4px;background:#1E2227;width:100%"><div style="height:4px;background:#7AA2F7;width:${Math.min(r.delay/max*100,100).toFixed(0)}%"></div></div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    <div class="note info" style="margin-top:8px"><div class="note-label">Jitter</div><p>Random offset within each window prevents multiple clients from retrying simultaneously — the thundering herd problem.</p></div>
+  `;
+}
+
+// ── Quiz ───────────────────────────────────────────────────────
+const Qs = [
+  { q: "Which HTTP method is both safe AND idempotent?", opts: ["POST","PATCH","GET","PUT"], ans: 2, ex: "GET is safe (no side effects) and idempotent (same result every time). PUT is idempotent but not safe. POST and PATCH are neither." },
+  { q: "A client sends a valid JWT but receives 403. What does this mean?", opts: ["JWT signature is invalid","JWT is expired","Authenticated but no permission for this resource","Authorization header is malformed"], ans: 2, ex: "403 Forbidden means authentication passed — the server knows who you are — but that identity lacks permission. 401 means unauthenticated." },
+  { q: "Best pagination for a real-time feed of millions of events with constant inserts?", opts: ["Offset / Limit","Page number","Cursor-based","Return all results"], ans: 2, ex: "Cursors encode the last-seen sort key (e.g. WHERE id > 9981). Offset/limit suffers pagination drift: concurrent inserts cause items to appear twice or be skipped." },
+  { q: "Which JWT claim MUST be validated to prevent token replay across services?", opts: ["sub (subject)","iat (issued at)","aud (audience)","jti (JWT ID)"], ans: 2, ex: "The aud (audience) claim specifies which service the token is intended for. Not validating it means a token for service A can be replayed against service B." },
+  { q: "What prevents a POST /payments endpoint from double-charging on a retried request?", opts: ["HTTP 201 status code","Idempotency-Key header","Content-Type: application/json","Using HTTPS"], ans: 1, ex: "An Idempotency-Key (UUID sent by the client) lets the server deduplicate: it stores key → response for 24h and returns the cached response on duplicate requests." },
+  { q: "What makes gRPC 3–10× faster than REST/JSON for inter-service calls?", opts: ["XML compression","MessagePack","Protocol Buffers (binary) over HTTP/2","JSON minification"], ans: 2, ex: "gRPC uses Protobuf — a compact binary format — transmitted over HTTP/2 with multiplexed streams. Smaller payloads, faster serialization, schema-enforced types." },
+  { q: "An API returns 200 with body {\"error\":\"user not found\"}. What is wrong?", opts: ["Nothing — valid pattern","Should use 404; 200 breaks caches, monitoring, and client error handling","Should use 500 for all errors","The key should be 'message' not 'error'"], ans: 1, ex: "Returning 200 with an error body means caches and monitoring treat it as success. Clients must parse every body to detect errors. Use 404 and a proper error body." },
+  { q: "Why is PKCE required for OAuth 2.0 in Single Page Applications?", opts: ["SPAs can't use HTTPS","SPAs can't store client_secret securely — PKCE proves code ownership without a secret","PKCE adds JWT support","PKCE is only for mobile"], ans: 1, ex: "SPAs run in the browser; any client_secret is visible to users. PKCE uses a hash of a random verifier sent at authorisation time, proved at token exchange — no static secret needed." },
+  { q: "Should you retry a request that returns 400 Bad Request?", opts: ["Yes — 400 is transient","No — the request itself is invalid; retrying won't fix it","Yes — with backoff","Depends on the API"], ans: 1, ex: "400 is a client error — the request is malformed. Retrying the identical request produces 400 every time. Fix the request, then retry. Only retry 5xx and 429." },
+  { q: "Which Cache-Control directive prevents sensitive data from being stored anywhere?", opts: ["max-age=0","private","no-store","must-revalidate"], ans: 2, ex: "no-store means 'never write this response to any cache — browser, CDN, or proxy'. max-age=0 still allows storage (just always revalidates). private only blocks shared caches." }
+];
+
+let qState = { i: 0, score: 0 };
+
+function renderQuiz() {
+  const wrap = document.getElementById('quiz-wrap');
+  if (qState.i >= Qs.length) {
+    const pct = Math.round(qState.score / Qs.length * 100);
+    wrap.innerHTML = `<div class="quiz-score"><div class="big">${qState.score}/${Qs.length}</div><p>${pct}% · ${pct >= 80 ? 'excellent' : pct >= 60 ? 'good effort' : 'keep studying'}</p><button class="btn primary" style="margin-top:24px" onclick="qState={i:0,score:0};renderQuiz()">Retake</button></div>`;
+    document.getElementById('qprog').style.width = '100%';
+    return;
+  }
+  const q = Qs[qState.i];
+  document.getElementById('qprog').style.width = (qState.i / Qs.length * 100) + '%';
+  wrap.innerHTML = `
+    <div class="quiz-counter">Question ${qState.i + 1} / ${Qs.length}</div>
+    <div class="quiz-q">${q.q}</div>
+    <div id="qopts">
+      ${q.opts.map((o, i) => `<div class="quiz-opt" onclick="answerQ(${i})">${o}</div>`).join('')}
+    </div>
+    <div class="quiz-explain" id="qex"><strong style="color:#E8EBED">Explanation:</strong> ${q.ex}</div>
+  `;
+}
+
+function answerQ(chosen) {
+  const q    = Qs[qState.i];
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts.forEach((el, i) => {
+    el.classList.add('disabled');
+    if (i === q.ans)                el.classList.add('correct');
+    else if (i === chosen)          el.classList.add('wrong');
+  });
+  document.getElementById('qex').classList.add('show');
+  if (chosen === q.ans) qState.score++;
+  setTimeout(() => { qState.i++; renderQuiz(); }, 2200);
+}
+
+// ── Init ──────────────────────────────────────────────────────
+buildRequest();
+renderQuiz();
+
+// pre-load a sample JWT
+document.getElementById('jwt-in').value =
+  'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImtleS0yMDI2LTA5In0.' +
+  'eyJzdWIiOiJ1c3JfNDIiLCJpc3MiOiJhdXRoLmV4YW1wbGUuY29tIiwiYXVkIjoiYXBpLmV4YW1wbGUuY29tIiwiaWF0IjoxNzIwMDAwMDAwLCJleHAiOjk5OTk5OTk5OTksImp0aSI6ImFiYzEyMyIsInNjb3BlIjoicmVhZDp1c2VycyB3cml0ZTpvcmRlcnMiLCJlbWFpbCI6ImFsaWNlQGV4YW1wbGUuY29tIn0.' +
+  'signature_not_verified';
+decodeJWT();
+</script>
+</body>
+</html>

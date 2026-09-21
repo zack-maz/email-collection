@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How LLMs Find a Needle in a Haystack — ByteByteGo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Fixed left rail -->
+  <div class="rail"></div>
+  <div class="rail-cap"></div>
+  <span class="rail-label l0">L 00</span>
+  <span class="rail-label l1">L 01</span>
+
+  <!-- Nav -->
+  <nav class="site-nav">
+    <a href="../../index.html" class="wordmark">zm / emails</a>
+    <div class="nav-links">
+      <a href="../../index.html">Index</a>
+      <a href="../api_concepts_every_software_engineer_should_know/index.html">API Concepts</a>
+      <a href="#" class="active">LLM Retrieval</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <div id="hero-mount" style="padding: 0 80px;">
+    <div class="hero rise">
+      <div class="hero-eyebrow">ByteByteGo · Newsletter Deep-Dive</div>
+      <h1>How LLMs Find a Needle in a Haystack</h1>
+      <p>RAG pipelines, vector search, HNSW graphs, and the tradeoffs no one explains — made interactive.</p>
+      <div class="hero-meta">
+        <div class="hero-meta-item">
+          <span class="hero-meta-label">Sections</span>
+          <span class="hero-meta-val">9</span>
+        </div>
+        <div class="hero-meta-item">
+          <span class="hero-meta-label">Interactives</span>
+          <span class="hero-meta-val">8</span>
+        </div>
+        <div class="hero-meta-item">
+          <span class="hero-meta-label">Quiz</span>
+          <span class="hero-meta-val">5 questions</span>
+        </div>
+      </div>
+      <div style="margin-bottom: 6px;">
+        <span class="hero-meta-label">Progress</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section nav pills -->
+  <div style="padding: 0 80px; margin-bottom: 40px; border-bottom: 1px solid var(--hairline);">
+    <div class="nav-pills" style="border-bottom: none; margin-bottom: 0;">
+      <a class="nav-pill active" href="#rag">RAG</a>
+      <a class="nav-pill" href="#chunk">Chunking</a>
+      <a class="nav-pill" href="#embed">Embeddings</a>
+      <a class="nav-pill" href="#metric">Metrics</a>
+      <a class="nav-pill" href="#flat">Index Race</a>
+      <a class="nav-pill" href="#hnsw">HNSW</a>
+      <a class="nav-pill" href="#recall">Recall Tuner</a>
+      <a class="nav-pill" href="#filter">Filtering</a>
+      <a class="nav-pill" href="#quiz">Quiz</a>
+      <a class="nav-pill" href="#summary">Cheat Sheet</a>
+    </div>
+  </div>
+
+  <!-- App renders here -->
+  <div id="app"></div>
+
+  <!-- Footer -->
+  <footer class="site-footer" style="margin: 64px 80px 0; padding-bottom: 40px;">
+    <div class="links">
+      <a href="../../index.html">← All Emails</a>
+      <a href="https://blog.bytebytego.com" target="_blank" rel="noopener">ByteByteGo ↗</a>
+    </div>
+    <div class="meta">
+      <span>LLM RETRIEVAL</span>
+      <span>RAG · HNSW · VECTOR SEARCH</span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

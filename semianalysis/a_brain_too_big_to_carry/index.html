@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A Brain Too Big to Carry — SemiAnalysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --void:     #0A0A0A;
+      --panel:    #0D0F12;
+      --hairline: #1E2227;
+      --muted:    #7C848D;
+      --text:     #C9CDD2;
+      --bright:   #E8EBED;
+      --accent:   #7AA2F7;
+      --good:     #9ECE6A;
+      --warn:     #E0AF68;
+      --danger:   #F7768E;
+      --purple:   #BB9AF7;
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+      --sans: 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
+      --ease: cubic-bezier(.2,.7,.2,1);
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--void); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.65; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+    a { color: var(--bright); text-decoration: none; }
+    a:hover { color: #fff; }
+
+    /* Rail */
+    .rail     { position: fixed; left: 32px; top: 80px; bottom: 80px; width: 1px; background: var(--hairline); pointer-events: none; z-index: 10; }
+    .rail-cap { position: fixed; left: 32px; top: 80px; width: 1px; height: 56px; background: var(--bright); opacity: 0.7; pointer-events: none; z-index: 11; }
+    .rail-label { position: fixed; left: 44px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--muted); pointer-events: none; z-index: 11; }
+    .rail-label.l0 { top: 74px; }
+    .rail-label.l1 { top: 480px; }
+
+    /* Nav */
+    .site-nav { display: flex; justify-content: space-between; align-items: center; height: 64px; padding: 0 80px; }
+    .site-nav .wordmark { font-size: 14px; font-weight: 500; color: var(--bright); }
+    .site-nav .nav-links { display: flex; gap: 28px; font-size: 14px; }
+    .site-nav .nav-links a { color: var(--text); }
+    .site-nav .nav-links a.active { color: var(--bright); }
+
+    /* Page shell */
+    .page { padding: 0 80px 80px; }
+
+    /* Hero */
+    .hero { padding: 56px 0 48px; border-bottom: 1px solid var(--hairline); }
+    .hero-eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+    .hero h1 { font-size: clamp(26px, 3.5vw, 42px); font-weight: 500; color: var(--bright); line-height: 1.1; letter-spacing: -0.02em; max-width: 720px; margin-bottom: 16px; text-wrap: pretty; }
+    .hero p { color: var(--text); font-size: 18px; line-height: 1.65; max-width: 560px; margin-bottom: 20px; text-wrap: pretty; }
+    .hero-meta { display: flex; align-items: baseline; gap: 24px; margin-bottom: 28px; flex-wrap: wrap; }
+    .hero-meta-item { display: flex; align-items: baseline; gap: 8px; }
+    .hero-meta-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .hero-meta-val { font-size: 14px; color: var(--text); }
+    .progress-bar-wrap { background: var(--hairline); height: 1px; max-width: 400px; overflow: hidden; }
+    .progress-bar-fill { background: var(--accent); height: 100%; width: 0%; transition: width 0.4s var(--ease); }
+
+    /* Section nav pills */
+    .sec-nav { display: flex; gap: 0; flex-wrap: wrap; border-bottom: 1px solid var(--hairline); margin: 40px 0; }
+    .sec-btn { background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); padding: 10px 0; margin-right: 24px; margin-bottom: -1px; font-family: var(--sans); font-size: 13px; cursor: pointer; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
+    .sec-btn:hover { color: var(--text); }
+    .sec-btn.active { color: var(--bright); border-bottom-color: var(--bright); }
+
+    /* Sections */
+    .section { margin-bottom: 72px; scroll-margin-top: 20px; }
+    .section-header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 20px; border-bottom: 1px solid var(--hairline); padding-bottom: 14px; }
+    .section-num { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--muted); flex-shrink: 0; }
+    .section h2 { font-size: 20px; font-weight: 500; letter-spacing: -0.01em; color: var(--bright); }
+
+    /* Cards */
+    .card { background: var(--panel); border: 1px solid var(--hairline); padding: 20px 24px; margin-bottom: 16px; }
+    .card p { color: var(--text); line-height: 1.65; margin-bottom: 12px; font-size: 15px; }
+    .card p:last-child { margin-bottom: 0; }
+    .card strong { color: var(--bright); }
+
+    /* Callouts */
+    .callout { border-left: 2px solid var(--accent); padding: 12px 16px; margin: 14px 0; font-size: 14px; color: var(--text); line-height: 1.65; max-width: 640px; }
+    .callout strong { color: var(--accent); }
+    .callout.warn { border-left-color: var(--warn); }
+    .callout.warn strong { color: var(--warn); }
+    .callout.tip  { border-left-color: var(--good); }
+    .callout.tip strong  { color: var(--good); }
+
+    /* Tooltips */
+    [data-tip] { position: relative; border-bottom: 1px dotted var(--muted); cursor: help; }
+    [data-tip]::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--hairline); color: var(--text); font-size: 12px; line-height: 1.5; font-family: var(--sans); padding: 8px 12px; width: 240px; pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 100; text-align: left; }
+    [data-tip]:hover::after { opacity: 1; }
+
+    /* Buttons */
+    .btn { background: none; border: 1px solid var(--hairline); color: var(--text); font-family: var(--sans); font-size: 13px; padding: 7px 18px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+    .btn:hover { border-color: var(--bright); color: var(--bright); }
+    .btn.outline { border-color: var(--hairline); color: var(--muted); }
+    .btn.outline:hover { border-color: var(--accent); color: var(--accent); }
+    .btn.primary { border-color: var(--accent); color: var(--accent); }
+    .btn.primary:hover { background: var(--accent); color: var(--void); }
+
+    /* Mono chip */
+    .chip { font-family: var(--mono); font-size: 11px; background: var(--panel); border: 1px solid var(--hairline); padding: 3px 9px; color: var(--accent); display: inline-block; }
+
+    /* Comparison table */
+    .cmp-tbl { width: 100%; border-collapse: collapse; font-size: 13px; margin: 16px 0; max-width: 860px; }
+    .cmp-tbl th { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 10px 16px 10px 0; border-bottom: 1px solid var(--hairline); font-weight: 400; }
+    .cmp-tbl td { padding: 12px 16px 12px 0; border-bottom: 1px solid var(--hairline); color: var(--text); vertical-align: top; line-height: 1.5; }
+    .cmp-tbl tr:last-child td { border-bottom: none; }
+    .cmp-tbl tr:hover td { color: var(--bright); }
+    .good-cell { color: var(--good) !important; }
+    .bad-cell  { color: var(--danger) !important; }
+    .warn-cell { color: var(--warn) !important; }
+
+    /* Stat cards */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin: 16px 0; }
+    .stat-card { background: var(--panel); border: 1px solid var(--hairline); padding: 16px; }
+    .stat-val { font-size: 24px; font-weight: 500; letter-spacing: -0.02em; color: var(--bright); margin-bottom: 4px; }
+    .stat-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+
+    /* Sliders */
+    input[type=range] { accent-color: var(--accent); cursor: pointer; width: 100%; }
+    .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .slider-row label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); white-space: nowrap; min-width: 140px; }
+
+    /* Canvas */
+    .canvas-wrap { background: var(--panel); border: 1px solid var(--hairline); overflow: hidden; margin-bottom: 16px; }
+    canvas { display: block; width: 100%; }
+
+    /* Flow diagram */
+    .flow { display: flex; align-items: center; gap: 0; flex-wrap: wrap; margin: 16px 0; }
+    .flow-node { background: var(--panel); border: 1px solid var(--hairline); padding: 10px 16px; font-size: 13px; text-align: center; }
+    .flow-node.on  { border-color: var(--good);   color: var(--good); }
+    .flow-node.off { border-color: var(--accent);  color: var(--accent); }
+    .flow-node.net { border-color: var(--warn);    color: var(--warn); }
+    .flow-arr { color: var(--muted); padding: 0 8px; font-size: 14px; }
+
+    /* Company cards */
+    .company-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 16px 0; }
+    .company-card { background: var(--panel); border: 1px solid var(--hairline); padding: 16px; cursor: pointer; transition: border-color 0.15s; }
+    .company-card:hover { border-color: var(--accent); }
+    .company-card.selected { border-color: var(--accent); }
+    .company-name { font-size: 14px; font-weight: 500; color: var(--bright); margin-bottom: 6px; }
+    .company-tag  { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+    .company-badge { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; padding: 2px 7px; display: inline-block; text-transform: uppercase; }
+    .badge-ondevice  { border: 1px solid var(--good);   color: var(--good); }
+    .badge-offdevice { border: 1px solid var(--accent);  color: var(--accent); }
+    .badge-hybrid    { border: 1px solid var(--warn);    color: var(--warn); }
+    .company-detail { background: var(--panel); border: 1px solid var(--hairline); padding: 16px; font-size: 13px; color: var(--text); line-height: 1.65; margin-top: 12px; }
+    .company-detail strong { color: var(--bright); }
+
+    /* TCO calculator */
+    .tco-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+    .tco-panel { background: var(--panel); border: 1px solid var(--hairline); padding: 20px; }
+    .tco-panel h4 { font-size: 14px; font-weight: 500; color: var(--bright); margin-bottom: 14px; }
+    .tco-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .tco-bar-label { font-family: var(--mono); font-size: 11px; color: var(--muted); min-width: 100px; text-align: right; }
+    .tco-bar-bg { flex: 1; background: var(--void); border: 1px solid var(--hairline); height: 22px; overflow: hidden; }
+    .tco-bar-fill { height: 100%; display: flex; align-items: center; padding-left: 8px; font-family: var(--mono); font-size: 11px; color: var(--void); transition: width 0.6s var(--ease); min-width: 30px; }
+    .tco-result { font-family: var(--mono); font-size: 22px; color: var(--bright); margin: 12px 0 4px; letter-spacing: -0.02em; }
+    .tco-sub { font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* Network wall */
+    .netwall-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 16px 0; }
+    .netwall-card { background: var(--panel); border: 1px solid var(--hairline); padding: 14px; }
+    .netwall-title { font-size: 13px; font-weight: 500; color: var(--bright); margin-bottom: 6px; }
+    .netwall-body  { font-size: 12px; color: var(--muted); line-height: 1.55; }
+    .netwall-card.solved { border-color: var(--good); }
+    .netwall-card.hard   { border-color: var(--danger); }
+    .netwall-card.medium { border-color: var(--warn); }
+
+    /* Latency simulator */
+    .latency-sim { background: var(--panel); border: 1px solid var(--hairline); padding: 20px; margin-bottom: 16px; }
+    .latency-bar-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .latency-layer-label { font-family: var(--mono); font-size: 11px; color: var(--muted); min-width: 160px; text-transform: uppercase; }
+    .latency-bar-bg { flex: 1; background: var(--void); border: 1px solid var(--hairline); height: 20px; overflow: hidden; }
+    .latency-bar-fill { height: 100%; display: flex; align-items: center; padding-left: 8px; font-family: var(--mono); font-size: 10px; color: var(--void); transition: width 0.4s var(--ease); }
+    .latency-total { font-family: var(--mono); font-size: 14px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--hairline); }
+
+    /* Quiz */
+    .quiz-q { font-size: 18px; font-weight: 500; color: var(--bright); margin-bottom: 16px; max-width: 640px; line-height: 1.45; letter-spacing: -0.01em; }
+    .quiz-options { display: grid; gap: 8px; margin-bottom: 14px; max-width: 640px; }
+    .quiz-opt { background: var(--panel); border: 1px solid var(--hairline); padding: 12px 16px; cursor: pointer; font-size: 14px; color: var(--text); transition: border-color 0.15s, color 0.15s; text-align: left; }
+    .quiz-opt:hover { border-color: var(--accent); color: var(--bright); }
+    .quiz-opt.correct { border-color: var(--good); color: var(--good); cursor: default; }
+    .quiz-opt.wrong   { border-color: var(--danger); color: var(--danger); cursor: default; }
+    .quiz-opt.disabled { cursor: default; pointer-events: none; }
+    .quiz-feedback { font-size: 13px; line-height: 1.65; display: none; border-left: 2px solid var(--hairline); padding: 10px 14px; color: var(--muted); max-width: 640px; }
+    .quiz-feedback.show { display: block; }
+    .quiz-feedback.ok  { border-left-color: var(--good); }
+    .quiz-feedback.bad { border-left-color: var(--danger); }
+
+    /* Footer */
+    .site-footer { margin: 64px 0 0; padding: 20px 0 40px; border-top: 1px solid var(--hairline); display: flex; justify-content: space-between; align-items: center; }
+    .site-footer .links { display: flex; gap: 28px; font-size: 14px; }
+    .site-footer .links a { display: flex; align-items: center; gap: 6px; color: var(--text); }
+    .site-footer .meta { display: flex; gap: 24px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; color: var(--muted); }
+
+    /* Animations */
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .rise { animation: rise 700ms var(--ease) both; }
+    @media (prefers-reduced-motion: reduce) { .rise { animation: none; } }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--void); }
+    ::-webkit-scrollbar-thumb { background: var(--hairline); }
+
+    @media (max-width: 720px) {
+      .rail, .rail-cap, .rail-label { left: 11px; }
+      .site-nav, .page { padding-left: 24px; padding-right: 24px; }
+      .tco-grid { grid-template-columns: 1fr; }
+      .site-footer { flex-direction: column; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="rail"></div>
+  <div class="rail-cap"></div>
+  <span class="rail-label l0">L 00</span>
+  <span class="rail-label l1">L 01</span>
+
+  <nav class="site-nav">
+    <a href="../../index.html" class="wordmark">zm / learning</a>
+    <div class="nav-links">
+      <a href="../../index.html">Index</a>
+      <a href="#" class="active">Robot Inference</a>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="hero rise">
+      <div class="hero-eyebrow">SemiAnalysis · Deep-Dive</div>
+      <h1>A Brain Too Big to Carry</h1>
+      <p>On-device vs. datacenter inference for robots — latency budgets, silicon economics, TCO, the network wall, and where the industry is actually landing.</p>
+      <div class="hero-meta">
+        <div class="hero-meta-item"><span class="hero-meta-label">Sections</span><span class="hero-meta-val">7</span></div>
+        <div class="hero-meta-item"><span class="hero-meta-label">Interactives</span><span class="hero-meta-val">6</span></div>
+        <div class="hero-meta-item"><span class="hero-meta-label">Quiz</span><span class="hero-meta-val">6 questions</span></div>
+      </div>
+      <div style="margin-bottom:6px;"><span class="hero-meta-label">Progress</span></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="sec-nav" id="sec-nav">
+      <button class="sec-btn active" data-sec="embodiment">Embodiment Problem</button>
+      <button class="sec-btn" data-sec="layers">Robot Layers</button>
+      <button class="sec-btn" data-sec="silicon">Silicon Reality</button>
+      <button class="sec-btn" data-sec="tco">TCO Analysis</button>
+      <button class="sec-btn" data-sec="deployments">Who's Doing What</button>
+      <button class="sec-btn" data-sec="netwall">Network Wall</button>
+      <button class="sec-btn" data-sec="quiz">Quiz</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 1 — The Embodiment Problem
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section" id="embodiment">
+      <div class="section-header">
+        <span class="section-num">Section 01</span>
+        <h2>The Embodiment Problem</h2>
+      </div>
+      <div class="card">
+        <p>With LLMs, the hardware bends to the model — train the biggest thing you can, then figure out how to serve it. Robotics <strong>inverts this</strong>. Two constraints fix the hardware first, and the model has to fit what can be manufactured and mounted.</p>
+        <p>The first constraint is <strong>time</strong>. A robot runs real-time control loops measured in milliseconds. An LLM can be slow without changing its output; if a robot is slow, the world moves on and the action is obsolete by the time it executes.</p>
+        <p>The second is <strong>cost</strong>. When you use an LLM, it lives in a datacenter you don't pay for upfront. In robotics, the manufacturer builds <em>both</em> the compute and the body — every unit, upfront — which at scale means billions or trillions in capital.</p>
+      </div>
+      <div class="callout">
+        <strong>The key inversion:</strong> LLM labs choose model size to optimize quality against a training budget. Robot labs choose model size by what their data can support and what fits on a <span data-tip="NVIDIA's edge AI module for robots. Current generation is Jetson Thor, running on TSMC N4.">Jetson</span> within a latency budget. Robot model sizes tell you where the constraints sit, not where intelligence will settle.
+      </div>
+
+      <!-- Interactive: model size comparison -->
+      <div class="card" style="margin-top:16px;">
+        <div style="font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:16px;">Robot models vs frontier LLMs — parameters</div>
+        <canvas id="modelSizeCanvas" height="220"></canvas>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 2 — Layers of a Robot Model
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section" id="layers">
+      <div class="section-header">
+        <span class="section-num">Section 02</span>
+        <h2>Layers of a Robot Model</h2>
+      </div>
+      <div class="card">
+        <p>A generalist robot runs three stacked layers, each with different latency requirements. The layer determines whether compute can leave the robot at all — not the model architecture, not the task difficulty.</p>
+        <p><strong>Planning layer</strong> (top): interprets the instruction and scene, decides what to do next, issues subtasks or grasp poses. Runs at ~5 Hz — each cycle has 200 ms. This is where reasoning lives, and reasoning models are big.</p>
+        <p><strong>Action / motion layer</strong> (middle): turns planner outputs into joint velocities, body poses, or action sequences. Runs at 20–100 Hz, so each cycle takes 10–50 ms.</p>
+        <p><strong>Servo &amp; safety layer</strong> (bottom): balance, contact response, actuator commands. Runs at 100–1000 Hz — each cycle is 1–10 ms. This layer can <em>never</em> leave the robot.</p>
+      </div>
+
+      <!-- Interactive: latency budget simulator -->
+      <div class="latency-sim">
+        <div style="font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:16px;">Latency budget simulator — adjust round-trip time</div>
+        <div class="slider-row">
+          <label>Network RTT (ms)</label>
+          <input type="range" id="rttSlider" min="2" max="200" value="20" step="1">
+          <div class="chip" id="rttVal">20ms</div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div class="latency-bar-wrap">
+            <div class="latency-layer-label">Planning (5 Hz)</div>
+            <div class="latency-bar-bg"><div class="latency-bar-fill" id="planningBar" style="background:var(--good);"></div></div>
+            <div class="chip" id="planningResult" style="margin-left:8px;">OK</div>
+          </div>
+          <div class="latency-bar-wrap">
+            <div class="latency-layer-label">Action (50 Hz)</div>
+            <div class="latency-bar-bg"><div class="latency-bar-fill" id="actionBar" style="background:var(--warn);"></div></div>
+            <div class="chip" id="actionResult" style="margin-left:8px;">TIGHT</div>
+          </div>
+          <div class="latency-bar-wrap">
+            <div class="latency-layer-label">Servo (500 Hz)</div>
+            <div class="latency-bar-bg"><div class="latency-bar-fill" id="servoBar" style="background:var(--danger);"></div></div>
+            <div class="chip" id="servoResult" style="margin-left:8px;">IMPOSSIBLE</div>
+          </div>
+        </div>
+        <div class="latency-total" id="latencyVerdict"></div>
+      </div>
+      <div class="callout tip">
+        <strong>The key insight:</strong> Jitter matters more than average latency. A fixed 40 ms delay can be planned around — the robot knows the world will move by roughly X in that window. Variable delay (jitter) cannot be predicted, so the robot must buffer to the worst case, paying the worst-case penalty on every action.
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 3 — The Silicon Reality
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section" id="silicon">
+      <div class="section-header">
+        <span class="section-num">Section 03</span>
+        <h2>The Silicon Reality</h2>
+      </div>
+      <div class="card">
+        <p>The supply chain is optimized for the datacenter, not the robot. NVIDIA's Jetson line — the best robot compute available today — is a thin sliver of its total output. The reason is economic: Blackwell datacenter GPUs earn mid-to-high 70% gross margins; Jetson modules earn mid-60s. With scarce leading-edge wafers, NVIDIA has every incentive to prioritize the datacenter.</p>
+        <p>Worse, robot silicon is converging onto the <em>same process nodes</em> as the datacenter. Jetson Orin ran on Samsung SF8, insulated from datacenter competition. Jetson Thor moved to TSMC N4 — the same node as Blackwell. Future generations track N3 and N2 alongside datacenter GPUs. A low-volume, lower-margin Jetson will always be competing from the back of the queue.</p>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-val">~1/10th</div>
+          <div class="stat-label">Jetson Thor FLOPs vs GB200</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">~1/30th</div>
+          <div class="stat-label">Jetson Thor memory bandwidth vs GB200</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">128 GB</div>
+          <div class="stat-label">Jetson Thor LPDDR5X (up from 32 GB on Xavier)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">7 robots</div>
+          <div class="stat-label">Silicon crossover point — above this, shared GPU uses less silicon per robot</div>
+        </div>
+      </div>
+
+      <!-- Interactive: silicon efficiency crossover -->
+      <div class="card">
+        <div style="font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:16px;">Silicon efficiency — leading-edge wafers per robot</div>
+        <div class="slider-row">
+          <label>Fleet size (robots)</label>
+          <input type="range" id="fleetSlider" min="1" max="50" value="10" step="1">
+          <div class="chip" id="fleetVal">10</div>
+        </div>
+        <canvas id="siliconCanvas" height="200"></canvas>
+        <div id="siliconVerdict" style="margin-top:12px;font-size:13px;color:var(--text);"></div>
+      </div>
+      <div class="callout warn">
+        <strong>The DRAM constraint:</strong> Most incremental DRAM capacity is being absorbed by <span data-tip="High Bandwidth Memory — stacked DRAM bonded directly to the GPU die. Used in datacenter accelerators. Non-HBM supply (LPDDR, commodity DRAM) is what robots compete for.">HBM</span> for AI accelerators. LPDDR supply — what robots depend on — is fighting for a shrinking pool. The crossover for DRAM efficiency is ~5 robots per GPU.
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 4 — TCO Analysis
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section" id="tco">
+      <div class="section-header">
+        <span class="section-num">Section 04</span>
+        <h2>Total Cost of Ownership</h2>
+      </div>
+      <div class="card">
+        <p>Silicon efficiency tells you which approach scales. TCO tells you which is cheaper to run. SemiAnalysis benchmarked three scenarios for a 96-robot fleet running <span data-tip="NVIDIA's Robot Test-Time Training model — a 3B parameter policy that continuously updates its weights during deployment using test-time training instead of a separate planning model.">RoboTTT-shaped inference</span>:</p>
+        <p>One <strong>B300 GPU</strong> can serve 12 robots within a 500 ms deadline. The <strong>RTX 6000 Pro</strong> handles 4 per GPU. A <strong>Jetson Thor</strong> serves one robot per chip, by definition.</p>
+      </div>
+      <div class="callout warn">
+        <strong>Utilization is the swing factor.</strong> All three scenarios are almost entirely fixed capital — the bill is the same whether the asset runs or sits idle. Cost per productive hour scales inversely with utilization. Industrial robots run ~40% of the time; B300 server pools run ~90%.
+      </div>
+
+      <!-- Interactive: TCO calculator -->
+      <div class="tco-grid">
+        <div class="tco-panel">
+          <h4>Parameters</h4>
+          <div class="slider-row">
+            <label>Robot utilization</label>
+            <input type="range" id="robotUtil" min="5" max="100" value="40" step="5">
+            <div class="chip" id="robotUtilVal">40%</div>
+          </div>
+          <div class="slider-row">
+            <label>GPU server utilization</label>
+            <input type="range" id="gpuUtil" min="20" max="100" value="90" step="5">
+            <div class="chip" id="gpuUtilVal">90%</div>
+          </div>
+          <div class="slider-row">
+            <label>Fleet size (robots)</label>
+            <input type="range" id="tcoFleet" min="12" max="192" value="96" step="12">
+            <div class="chip" id="tcoFleetVal">96</div>
+          </div>
+        </div>
+        <div class="tco-panel">
+          <h4>TCO per PFLOP (relative)</h4>
+          <div id="tcoBars"></div>
+          <div id="tcoVerdict" style="margin-top:12px;font-size:13px;color:var(--muted);line-height:1.6;"></div>
+        </div>
+      </div>
+      <div class="callout tip">
+        <strong>The actual numbers (96-robot fleet):</strong> B300 offload at 90% GPU utilization reaches ~46% the TCO per PFLOP of Jetson Thor at 40% utilization. For home robots (4–8% utilization), offload reaches as low as ~12%.
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 5 — Who's Doing What
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section" id="deployments">
+      <div class="section-header">
+        <span class="section-num">Section 05</span>
+        <h2>Who's Doing What — and Why</h2>
+      </div>
+      <div class="card">
+        <p>On paper, off-robot compute wins on TCO. In practice nobody is at mass production yet, so TCO isn't what decides today. Companies have split into two camps based on how much generality the robot needs, how bad the wireless is, and how much of the customer's site they're allowed to change.</p>
+      </div>
+
+      <!-- Interactive: company explorer -->
+      <div class="company-grid" id="companyGrid"></div>
+      <div class="company-detail" id="companyDetail">← Select a company to see their architecture decision and rationale.</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 6 — The Network Wall
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section" id="netwall">
+      <div class="section-header">
+        <span class="section-num">Section 06</span>
+        <h2>Climbing the Network Wall</h2>
+      </div>
+      <div class="card">
+        <p>Nearly every company that keeps inference on-device gives the same reason: the network. Off-device inference requires solving three layered problems — embodiment, the network infrastructure itself, and the physical environment. The companies that have gone off-device got there by staffing multiple dedicated teams.</p>
+      </div>
+
+      <div class="netwall-grid" id="netwallGrid"></div>
+
+      <div class="card" style="margin-top:16px;">
+        <div style="font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:14px;">The four hard problems — and how to address them</div>
+        <table class="cmp-tbl" style="max-width:100%;">
+          <thead><tr><th>Problem</th><th>Why it's hard</th><th>The fix</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Uplink scheduling</strong></td>
+              <td>WiFi was designed for downlink-heavy stationary clients. Robots invert this: video goes <em>up</em>, while the robot moves.</td>
+              <td>Robot-aware access points that give each robot a reserved slot instead of contending for the channel.</td>
+            </tr>
+            <tr>
+              <td><strong>Access point handoffs</strong></td>
+              <td>A typical router goes silent for 100 ms–several seconds during a handoff — mid-manipulation, this can floor a robot.</td>
+              <td>Fast roaming with pre-association, synchronized to the robot's position and predicted path.</td>
+            </tr>
+            <tr>
+              <td><strong>Jitter buffering</strong></td>
+              <td>Variable delay forces the robot to buffer to worst-case, making every action pay the max-latency penalty.</td>
+              <td>Centralized timing authority, sub-millisecond synchronization, batched inference on a shared clock.</td>
+            </tr>
+            <tr>
+              <td><strong>Uplink bandwidth</strong></td>
+              <td>Image sensors are nearly all of a robot's uplink. Camera feeds at inference frequency saturate consumer WiFi.</td>
+              <td>6 GHz spectrum (uncongested), perception compression, uplink MIMO chipsets, co-designed mainboard + AP.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>The prerequisite for off-device compute:</strong> a small-to-medium sized, structured space where the operator controls RF conditions. Autonomous driving fails this; factories and homes pass it — but neither is easy.
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 7 — Quiz
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section" id="quiz">
+      <div class="section-header">
+        <span class="section-num">Knowledge Check</span>
+        <h2>Test Your Understanding</h2>
+      </div>
+      <div id="quizMount"></div>
+    </div>
+
+    <footer class="site-footer">
+      <div class="links">
+        <a href="../../index.html">← All Resources</a>
+        <a href="https://newsletter.semianalysis.com/p/a-brain-too-big-to-carry-on-device" target="_blank" rel="noopener">Source ↗</a>
+      </div>
+      <div class="meta">
+        <span>ROBOT INFERENCE</span>
+        <span>ON-DEVICE · TCO · NETWORK WALL</span>
+      </div>
+    </footer>
+  </div>
+
+<script>
+// ── Utils ─────────────────────────────────────────────────────────────────
+const qs = (s, r = document) => r.querySelector(s);
+const qsa = (s, r = document) => [...r.querySelectorAll(s)];
+
+// ── Progress ─────────────────────────────────────────────────────────────
+const SECTION_IDS = ['embodiment','layers','silicon','tco','deployments','netwall','quiz'];
+const visited = new Set();
+function markVisited(id) {
+  visited.add(id);
+  const pct = Math.round((visited.size / SECTION_IDS.length) * 100);
+  qs('#progress-fill').style.width = pct + '%';
+}
+const sectionObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting && e.target.id) {
+      markVisited(e.target.id);
+      qsa('.sec-btn').forEach(b => b.classList.remove('active'));
+      const btn = qs(`[data-sec="${e.target.id}"]`);
+      if (btn) btn.classList.add('active');
+    }
+  });
+}, { threshold: 0.15 });
+SECTION_IDS.forEach(id => { const el = qs('#' + id); if (el) sectionObserver.observe(el); });
+
+// Section nav scroll
+qsa('.sec-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = qs('#' + btn.dataset.sec);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+// ── SECTION 1: Model size chart ────────────────────────────────────────
+(function() {
+  const canvas = qs('#modelSizeCanvas');
+  function draw() {
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.offsetWidth; const H = 220;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, W, H);
+
+    const models = [
+      { name: 'π0 (Pi)', params: 3,    type: 'robot',  color: '#9ECE6A' },
+      { name: 'π0.7',    params: 5,    type: 'robot',  color: '#9ECE6A' },
+      { name: 'GR-3',    params: 4,    type: 'robot',  color: '#9ECE6A' },
+      { name: 'RoboTTT', params: 3,    type: 'robot',  color: '#9ECE6A' },
+      { name: 'DreamZero',params: 14,  type: 'robot',  color: '#E0AF68' },
+      { name: 'GPT-4',   params: 1000, type: 'llm',    color: '#7AA2F7' },
+      { name: 'Gemini 3.5', params: 400, type: 'llm',  color: '#7AA2F7' },
+      { name: 'Llama 4', params: 2000, type: 'llm',    color: '#BB9AF7' },
+    ];
+    const maxLog = Math.log10(2000);
+    const barH = 22; const gap = 6;
+    const labelW = 90; const rightPad = 60;
+    models.forEach((m, i) => {
+      const y = 20 + i * (barH + gap);
+      const logParams = Math.log10(Math.max(m.params, 1));
+      const barW = ((logParams / maxLog)) * (W - labelW - rightPad);
+      // label
+      ctx.fillStyle = '#7C848D'; ctx.font = '11px Hanken Grotesk, sans-serif';
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText(m.name, labelW - 6, y + barH / 2);
+      // bar
+      ctx.fillStyle = m.color + '33';
+      ctx.fillRect(labelW, y, barW, barH);
+      ctx.fillStyle = m.color;
+      ctx.fillRect(labelW, y, 3, barH);
+      // value
+      ctx.fillStyle = m.color; ctx.textAlign = 'left';
+      ctx.fillText(m.params >= 1000 ? (m.params/1000).toFixed(0) + 'T' : m.params + 'B', labelW + barW + 6, y + barH / 2);
+    });
+    // legend
+    ctx.textAlign = 'left'; ctx.font = '11px Hanken Grotesk, sans-serif';
+    ctx.fillStyle = '#9ECE6A'; ctx.fillRect(labelW, H - 16, 10, 10);
+    ctx.fillStyle = '#7C848D'; ctx.fillText('Robot models', labelW + 14, H - 8);
+    ctx.fillStyle = '#7AA2F7'; ctx.fillRect(labelW + 130, H - 16, 10, 10);
+    ctx.fillText('Frontier LLMs (log scale)', labelW + 144, H - 8);
+  }
+  draw(); window.addEventListener('resize', draw);
+})();
+
+// ── SECTION 2: Latency simulator ─────────────────────────────────────────
+(function() {
+  function update() {
+    const rtt = parseInt(qs('#rttSlider').value);
+    qs('#rttVal').textContent = rtt + 'ms';
+
+    const layers = [
+      { id: 'planning', budget: 200,  name: 'Planning (5 Hz)',  budgetMs: 200 },
+      { id: 'action',   budget: 20,   name: 'Action (50 Hz)',   budgetMs: 20  },
+      { id: 'servo',    budget: 2,    name: 'Servo (500 Hz)',   budgetMs: 2   },
+    ];
+
+    let verdictParts = [];
+    layers.forEach(l => {
+      const inferenceHeadroom = l.budgetMs - rtt;
+      const pct = Math.min(100, Math.round((rtt / l.budgetMs) * 100));
+      const bar = qs(`#${l.id}Bar`);
+      const chip = qs(`#${l.id}Result`);
+      bar.style.width = pct + '%';
+
+      if (inferenceHeadroom >= l.budgetMs * 0.5) {
+        bar.style.background = 'var(--good)'; chip.textContent = 'CAN OFFLOAD';
+        chip.style.color = 'var(--good)'; chip.style.borderColor = 'var(--good)';
+      } else if (inferenceHeadroom > 0) {
+        bar.style.background = 'var(--warn)'; chip.textContent = rtt + 'ms RTT';
+        chip.style.color = 'var(--warn)'; chip.style.borderColor = 'var(--warn)';
+      } else {
+        bar.style.background = 'var(--danger)'; chip.textContent = 'ON-DEVICE ONLY';
+        chip.style.color = 'var(--danger)'; chip.style.borderColor = 'var(--danger)';
+      }
+    });
+
+    const planningOk = rtt < 100;
+    qs('#latencyVerdict').innerHTML = `
+      <span style="font-family:var(--mono);font-size:12px;color:var(--muted)">At ${rtt} ms RTT: </span>
+      <span style="font-family:var(--mono);font-size:12px;color:${planningOk ? 'var(--good)' : 'var(--warn)'}">
+        Planning layer ${planningOk ? 'can be offloaded' : 'is marginal — consider jitter overhead'}.
+      </span>
+      <span style="font-family:var(--mono);font-size:12px;color:var(--danger)"> Action + servo layers must stay on-device.</span>
+    `;
+  }
+  qs('#rttSlider').addEventListener('input', update);
+  update();
+})();
+
+// ── SECTION 3: Silicon crossover ─────────────────────────────────────────
+(function() {
+  function draw() {
+    const fleet = parseInt(qs('#fleetSlider').value);
+    qs('#fleetVal').textContent = fleet;
+
+    const canvas = qs('#siliconCanvas');
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.offsetWidth; const H = 200;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, W, H);
+
+    const maxFleet = 50;
+    const jetsons = Array.from({length: maxFleet}, (_, i) => ({ x: i+1, y: i+1 }));
+    const datacenter = Array.from({length: maxFleet}, (_, i) => ({ x: i+1, y: Math.max(0.1, (i+1) / 12) }));
+    const pad = { l: 50, r: 20, t: 20, b: 40 };
+    const W2 = W - pad.l - pad.r; const H2 = H - pad.t - pad.b;
+
+    function px(x) { return pad.l + (x / maxFleet) * W2; }
+    function py(y) { return pad.t + H2 - (y / maxFleet) * H2; }
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
+    for (let i = 0; i <= 5; i++) {
+      const y = py(i * 10);
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
+    }
+
+    // Jetson line
+    ctx.strokeStyle = '#F7768E'; ctx.lineWidth = 2; ctx.setLineDash([]);
+    ctx.beginPath();
+    jetsons.forEach((p, i) => { i === 0 ? ctx.moveTo(px(p.x), py(p.y)) : ctx.lineTo(px(p.x), py(p.y)); });
+    ctx.stroke();
+
+    // Datacenter line
+    ctx.strokeStyle = '#7AA2F7'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    datacenter.forEach((p, i) => { i === 0 ? ctx.moveTo(px(p.x), py(p.y)) : ctx.lineTo(px(p.x), py(p.y)); });
+    ctx.stroke();
+
+    // Crossover point (x=7)
+    const cx = px(7); const cy1 = py(7); const cy2 = py(7/12);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(cx, pad.t); ctx.lineTo(cx, H - pad.b); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Current fleet marker
+    const fx = px(fleet);
+    const jy = py(fleet);
+    const dy = py(fleet / 12);
+    ctx.beginPath(); ctx.arc(fx, jy, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#F7768E'; ctx.fill();
+    ctx.beginPath(); ctx.arc(fx, dy, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#7AA2F7'; ctx.fill();
+
+    // Labels
+    ctx.fillStyle = 'var(--muted)'; ctx.font = '11px Hanken Grotesk, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#F7768E'; ctx.fillText('Jetson Thor (1 chip/robot)', pad.l + 4, pad.t + 14);
+    ctx.fillStyle = '#7AA2F7'; ctx.fillText('B300 (shared, 12 robots/GPU)', pad.l + 4, pad.t + 28);
+    ctx.fillStyle = '#7C848D'; ctx.fillText('Crossover: 7 robots', cx + 6, pad.t + 14);
+    ctx.fillStyle = '#7C848D'; ctx.font = '10px Hanken Grotesk, sans-serif';
+    ctx.fillText('wafers/robot', 10, pad.t + H2 / 2);
+    ctx.fillText('fleet size', pad.l + W2 / 2 - 20, H - 8);
+
+    const verdict = fleet <= 7
+      ? `At ${fleet} robots, on-device uses fewer wafers per robot. Below the crossover.`
+      : `At ${fleet} robots, shared datacenter GPU uses fewer wafers per robot — ${((fleet / (fleet/12)) / fleet * 100).toFixed(0)}% the silicon of on-device.`;
+    qs('#siliconVerdict').innerHTML = `<span style="font-family:var(--mono);font-size:12px;color:${fleet <= 7 ? 'var(--warn)' : 'var(--good)'}">${verdict}</span>`;
+  }
+  qs('#fleetSlider').addEventListener('input', draw);
+  draw(); window.addEventListener('resize', draw);
+})();
+
+// ── SECTION 4: TCO calculator ─────────────────────────────────────────────
+(function() {
+  function update() {
+    const robotUtil = parseInt(qs('#robotUtil').value);
+    const gpuUtil   = parseInt(qs('#gpuUtil').value);
+    const fleet     = parseInt(qs('#tcoFleet').value);
+    qs('#robotUtilVal').textContent = robotUtil + '%';
+    qs('#gpuUtilVal').textContent   = gpuUtil + '%';
+    qs('#tcoFleetVal').textContent  = fleet;
+
+    // Simplified TCO model — relative to Jetson Thor at 40% util = 1.0
+    const jetstonBase = 0.37;   // $/hr/PFLOP at 40% util
+    const b300Base    = 0.17;   // $/hr/PFLOP at 90% GPU util
+
+    const jetstonTCO = jetstonBase * (40 / robotUtil);
+    const b300TCO    = b300Base * (90 / gpuUtil);
+    const rtxTCO     = 0.39 * (90 / gpuUtil) * 1.15; // RTX Pro is less efficient
+
+    const maxTCO = Math.max(jetstonTCO, b300TCO, rtxTCO);
+    const bars = [
+      { label: 'Jetson Thor',    val: jetstonTCO, color: '#F7768E' },
+      { label: 'B300 offload',   val: b300TCO,    color: '#7AA2F7' },
+      { label: 'RTX 6000 Pro',   val: rtxTCO,     color: '#BB9AF7' },
+    ];
+    const barsEl = qs('#tcoBars');
+    barsEl.innerHTML = '';
+    bars.forEach(b => {
+      const pct = Math.min(100, Math.round((b.val / maxTCO) * 100));
+      const row = document.createElement('div');
+      row.className = 'tco-bar-row';
+      row.innerHTML = `
+        <div class="tco-bar-label">${b.label}</div>
+        <div class="tco-bar-bg"><div class="tco-bar-fill" style="background:${b.color};width:0%">$${b.val.toFixed(2)}/PFLOP</div></div>`;
+      barsEl.appendChild(row);
+      setTimeout(() => row.querySelector('.tco-bar-fill').style.width = pct + '%', 30);
+    });
+
+    const winner = b300TCO < jetstonTCO ? 'B300 offload' : 'Jetson Thor on-device';
+    const ratio = Math.round((Math.min(b300TCO, jetstonTCO) / Math.max(b300TCO, jetstonTCO)) * 100);
+    qs('#tcoVerdict').innerHTML = `At ${robotUtil}% robot / ${gpuUtil}% GPU utilization with ${fleet} robots: <strong style="color:var(--accent)">${winner}</strong> wins on TCO at ${ratio}% the cost of the other.`;
+  }
+  ['#robotUtil','#gpuUtil','#tcoFleet'].forEach(id => qs(id).addEventListener('input', update));
+  update();
+})();
+
+// ── SECTION 5: Company explorer ──────────────────────────────────────────
+(function() {
+  const companies = [
+    {
+      name: 'Boston Dynamics',
+      tag: 'Atlas · Spot · Stretch',
+      mode: 'hybrid',
+      badge: 'Hybrid',
+      summary: '<strong>System 1 on-device, System 2 off-device.</strong> System 1 (visuomotor policy, Jetson Thor) drives the robot. System 2 (reasoning, estimated hundreds of billions of parameters on Google TPUs via DeepMind partnership) interprets work orders and supervises. The split is forced by model size: a factory-grade reasoning model simply cannot fit on a robot\'s power and thermal budget. System 2 queries every few seconds to once or twice per second. Data security is managed through Orbit (SOC 2) and Gemini Enterprise Agent Platform.',
+    },
+    {
+      name: 'Agility Robotics',
+      tag: 'Digit · Warehouses & factories',
+      mode: 'ondevice',
+      badge: 'On-Device',
+      summary: '<strong>All inference on-device (Jetson-class accelerator).</strong> Agility post-trains a third-party base model on their own task data — a narrow enough scope that frontier model size isn\'t needed. Off-device functions (fleet orchestration, workflow assignment, OTA updates) live in Agility Arc but tolerate latency variability. Key reason to stay on-device: factory RF environments are hostile (metal racking, motor interference, moving dead zones), and Agility wants Digit to work in existing sites with zero infrastructure changes.',
+    },
+    {
+      name: 'Verne Robotics',
+      tag: 'Nemo · Warehouses',
+      mode: 'ondevice',
+      badge: 'On-Device',
+      summary: '<strong>Full perception-to-action stack on Jetson or RTX 50-series.</strong> Verne builds narrow, task-specific policies for warehouse manipulation — no open-world reasoning required. Proprietary data collection suits capture embodied data at customer sites. On-device inference eliminates datacenter dependency during execution. Tasks like picking, packing, and cold-chain logistics don\'t need the generality that forces a model off the robot.',
+    },
+    {
+      name: 'Sunday Robotics',
+      tag: 'Memo · Home',
+      mode: 'ondevice',
+      badge: 'On-Device',
+      summary: '<strong>Started cloud, reversed to on-device after 2 days in real homes.</strong> Sunday initially assumed cloud inference. Home WiFi proved impossible: dead zones, neighbor interference, badly configured mesh routers, asymmetric links. Latency was fine — jitter destroyed 99% task success. Starlink and 5G were no better. The model now runs directly on the GPU inside Memo. Sunday\'s ACT-2 result: 99.1% zero-shot laundry folding across 9 garment types in unseen homes, on-device.',
+    },
+    {
+      name: 'Weave Robotics',
+      tag: 'Isaac · Home',
+      mode: 'ondevice',
+      badge: 'On-Device',
+      summary: '<strong>Inference on-device; network used for training data upload and teleoperation only.</strong> Weave trains both their own VLA and uses Physical Intelligence models — whichever gives a better experience. Both likely run on the robot. The WiFi link still matters: proprioceptive and visual data goes up as training data, and teleoperators step in via the same link when the robot struggles. Weave handles bad home WiFi by pushing all adaptation onto the robot — no new routers or APs required.',
+    },
+  ];
+
+  const grid = qs('#companyGrid');
+  const detail = qs('#companyDetail');
+
+  companies.forEach((c, i) => {
+    const card = document.createElement('div');
+    card.className = 'company-card';
+    card.innerHTML = `
+      <div class="company-name">${c.name}</div>
+      <div class="company-tag">${c.tag}</div>
+      <div class="company-badge badge-${c.mode === 'hybrid' ? 'hybrid' : c.mode === 'offdevice' ? 'offdevice' : 'ondevice'}">${c.badge}</div>`;
+    card.addEventListener('click', () => {
+      qsa('.company-card').forEach(x => x.classList.remove('selected'));
+      card.classList.add('selected');
+      detail.innerHTML = c.summary;
+    });
+    grid.appendChild(card);
+  });
+})();
+
+// ── SECTION 6: Network wall challenges ───────────────────────────────────
+(function() {
+  const challenges = [
+    { title: 'Uplink scheduling', body: 'WiFi was built for downlink. Robots invert this: video streams go up at inference cadence. Consumer APs queue robot traffic behind household traffic — scheduling has to be inverted.', level: 'hard' },
+    { title: 'AP handoffs', body: 'Moving robots roam between access points. A typical handoff costs 100 ms to several seconds of silence — multiple dropped observation frames, mid-manipulation.', level: 'hard' },
+    { title: 'Jitter vs latency', body: 'Average latency is manageable. Jitter is not: the robot must buffer to worst-case delay, paying that penalty on every action — even the fast ones.', level: 'hard' },
+    { title: 'Uplink MIMO', body: 'Consumer mainboards ship 1–2 stream uplink. Robots need 4×4 uplink MIMO to hit the bandwidth that robot inference requires without retransmissions.', level: 'medium' },
+    { title: 'RF environment', body: 'Metal, motors, and moving inventory create dynamic dead zones. Access point placement must be measured and re-optimized as the environment changes.', level: 'medium' },
+    { title: 'Perception bandwidth', body: 'Image sensors dominate the uplink. The compression-quality tradeoff is a perception problem before it is a networking problem.', level: 'medium' },
+    { title: 'Spectrum', body: '6 GHz is uncongested and wide enough to deliver retransmission-free reliability. Getting customers to provision it is an operational challenge, not a technical one.', level: 'solved' },
+    { title: 'Transport layer', body: 'Modified WebRTC (UDP + application-layer reliability + freshness priority) is already commodity engineering. Not the hard part.', level: 'solved' },
+  ];
+  const grid = qs('#netwallGrid');
+  challenges.forEach(c => {
+    const card = document.createElement('div');
+    card.className = `netwall-card ${c.level}`;
+    card.innerHTML = `<div class="netwall-title">${c.title}</div><div class="netwall-body">${c.body}</div>`;
+    grid.appendChild(card);
+  });
+})();
+
+// ── SECTION 7: Quiz ────────────────────────────────────────────────────────
+(function() {
+  const QUIZ = [
+    {
+      q: 'Why can the servo and safety layer never be offloaded to a datacenter?',
+      opts: [
+        'The servo layer requires too much bandwidth',
+        'A 500 Hz loop has a 2 ms budget — a single network round trip consumes the entire budget before inference happens',
+        'Safety regulations prohibit wireless control of robot actuators',
+        'Servo models are too small to benefit from datacenter GPUs',
+      ],
+      correct: 1,
+      explain: 'At 500 Hz, each cycle has 2 ms. Even a fast wireless link has a 10–50 ms round trip, instantly blowing the budget. This isn\'t a safety rule — it\'s basic math. The planning layer (5 Hz, 200 ms budget) is the offload candidate.',
+    },
+    {
+      q: 'Why does jitter hurt robot off-device inference more than average latency does?',
+      opts: [
+        'Higher jitter increases average latency over time',
+        'Jitter causes packet loss, which corrupts model outputs',
+        'A fixed delay can be planned around; variable delay forces buffering to worst-case, paying that penalty on every action',
+        'Jitter affects the planning layer but not the action layer',
+      ],
+      correct: 2,
+      explain: 'A fixed delay is predictable — the robot can calculate how far the world will move in that window and compensate. Jitter is unpredictable, so the system must assume worst-case latency on every cycle. That turns a "sometimes slow" link into an "always slow" system.',
+    },
+    {
+      q: 'At what fleet size does shared datacenter silicon use fewer wafers per robot than one Jetson per robot?',
+      opts: ['2 robots per GPU', '5 robots per GPU', '7 robots per GPU', '12 robots per GPU'],
+      correct: 2,
+      explain: 'SemiAnalysis\'s analysis puts the silicon crossover at ~7 robots per B300 GPU. Below this, on-device uses fewer wafers. Above it, the shared GPU is more efficient. (The DRAM crossover is ~5 robots per GPU, slightly earlier.)',
+    },
+    {
+      q: 'What is the main reason Boston Dynamics offloads System 2 reasoning off the robot?',
+      opts: [
+        'Wireless networks are reliable enough in factory environments',
+        'A factory-grade reasoning model (hundreds of billions of parameters) would require datacenter power — more than the entire robot draws at peak',
+        'Google TPUs are cheaper than Jetson modules per FLOP',
+        'On-device inference introduces too much latency for planning',
+      ],
+      correct: 1,
+      explain: 'A Blackwell-class GPU draws 1.2–1.4 kW per chip. A humanoid runs on roughly 2 kWh of battery and draws a few hundred watts in normal operation. Bolting a datacenter chip onto the robot would out-draw the entire machine, demand cooling the robot can\'t carry, and flatten the battery in minutes. The model size follows from the task requirement, not a preference.',
+    },
+    {
+      q: 'Why did Sunday Robotics reverse course and move inference on-device after initially planning for cloud inference?',
+      opts: [
+        'On-device inference was significantly cheaper than cloud compute',
+        'Home WiFi jitter — not average latency — destroyed task success in real homes after 2 days of testing',
+        'Their model was too small to benefit from datacenter GPUs',
+        'Data privacy regulations prohibited streaming video to the cloud',
+      ],
+      correct: 1,
+      explain: 'Latency was mostly fine. Jitter was the problem: dead zones, neighbor interference, mesh router misconfiguration, and asymmetric links. A robot trying to hold 99% success over hours can\'t absorb the occasional hiccup a video call can. Starlink and 5G had the same problem. The model moved on-device.',
+    },
+    {
+      q: 'What makes "location-aware beamforming" necessary for robot WiFi — and why does a standard access point fail here?',
+      opts: [
+        'Standard APs use too much power for factory environments',
+        'Robots move, so the AP must steer, schedule, and hand off ahead of the robot\'s predicted path rather than reacting after signal drops',
+        'Standard APs don\'t support the 6 GHz band required for robot inference',
+        'Beamforming increases bandwidth, which robot video streams require',
+      ],
+      correct: 1,
+      explain: 'Standard APs react to signal changes — they notice the robot has moved and then respond. By then, the handoff window has already caused dropped frames. Robotics requires the AP to know where the robot is and where it\'s going, pre-associating with the next AP before signal degrades. This is fundamentally different from how enterprise WiFi works.',
+    },
+  ];
+
+  const mount = qs('#quizMount');
+  let score = 0; let answered = 0;
+
+  QUIZ.forEach((qd, qi) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'card'; wrap.style.marginBottom = '16px';
+    const qnum = document.createElement('div');
+    qnum.style.cssText = 'font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:10px;';
+    qnum.textContent = `Question ${qi + 1} of ${QUIZ.length}`;
+    const qtxt = document.createElement('div');
+    qtxt.className = 'quiz-q'; qtxt.textContent = qd.q;
+    const opts = document.createElement('div'); opts.className = 'quiz-options';
+    const fb = document.createElement('div'); fb.className = 'quiz-feedback';
+
+    qd.opts.forEach((opt, oi) => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-opt'; btn.textContent = opt;
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('disabled')) return;
+        qsa('.quiz-opt', opts).forEach(b => b.classList.add('disabled'));
+        const isCorrect = oi === qd.correct;
+        btn.classList.add(isCorrect ? 'correct' : 'wrong');
+        qsa('.quiz-opt', opts)[qd.correct].classList.add('correct');
+        fb.textContent = (isCorrect ? '✓ Correct. ' : '✗ Not quite. ') + qd.explain;
+        fb.className = 'quiz-feedback show ' + (isCorrect ? 'ok' : 'bad');
+        if (isCorrect) score++;
+        answered++;
+        if (answered === QUIZ.length) {
+          const summary = document.createElement('div');
+          summary.className = 'callout tip'; summary.style.marginTop = '16px';
+          summary.innerHTML = `<strong>Score: ${score}/${QUIZ.length}</strong> — ${
+            score === QUIZ.length ? '🏆 Perfect. You\'ve internalized the on-device vs. offload tradeoffs.' :
+            score >= 4 ? '👍 Strong understanding. Review the sections you missed.' :
+            '📖 Revisit the interactive sections — especially latency budgets and the silicon crossover.'
+          }`;
+          mount.appendChild(summary);
+        }
+      });
+      opts.appendChild(btn);
+    });
+
+    wrap.appendChild(qnum); wrap.appendChild(qtxt); wrap.appendChild(opts); wrap.appendChild(fb);
+    mount.appendChild(wrap);
+  });
+})();
+</script>
+</body>
+</html>
