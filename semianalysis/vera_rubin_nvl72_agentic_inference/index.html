@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vera Rubin NVL72 Agentic Inference — SemiAnalysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --void:     #0A0A0A;
+      --panel:    #0D0F12;
+      --hairline: #1E2227;
+      --muted:    #7C848D;
+      --text:     #C9CDD2;
+      --bright:   #E8EBED;
+      --accent:   #7AA2F7;
+      --good:     #9ECE6A;
+      --warn:     #E0AF68;
+      --danger:   #F7768E;
+      --purple:   #BB9AF7;
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+      --sans: 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
+      --ease: cubic-bezier(.2,.7,.2,1);
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--void); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.65; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+    a { color: var(--bright); text-decoration: none; }
+    a:hover { color: #fff; }
+
+    /* Rail */
+    .rail     { position: fixed; left: 32px; top: 80px; bottom: 80px; width: 1px; background: var(--hairline); pointer-events: none; z-index: 10; }
+    .rail-cap { position: fixed; left: 32px; top: 80px; width: 1px; height: 56px; background: var(--bright); opacity: 0.7; pointer-events: none; z-index: 11; }
+    .rail-label { position: fixed; left: 44px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--muted); pointer-events: none; z-index: 11; }
+    .rail-label.l0 { top: 74px; }
+    .rail-label.l1 { top: 480px; }
+
+    /* Nav */
+    .site-nav { display: flex; justify-content: space-between; align-items: center; height: 64px; padding: 0 80px; }
+    .site-nav .wordmark { font-size: 14px; font-weight: 500; color: var(--bright); }
+    .site-nav .nav-links { display: flex; gap: 28px; font-size: 14px; }
+    .site-nav .nav-links a { color: var(--text); }
+    .site-nav .nav-links a.active { color: var(--bright); }
+
+    /* Page shell */
+    .page { padding: 0 80px 80px; }
+
+    /* Hero */
+    .hero { padding: 56px 0 48px; border-bottom: 1px solid var(--hairline); }
+    .hero-eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+    .hero h1 { font-size: clamp(26px, 3.5vw, 42px); font-weight: 500; color: var(--bright); line-height: 1.1; letter-spacing: -0.02em; max-width: 720px; margin-bottom: 16px; text-wrap: pretty; }
+    .hero p { color: var(--text); font-size: 18px; line-height: 1.65; max-width: 560px; margin-bottom: 20px; text-wrap: pretty; }
+    .hero-meta { display: flex; align-items: baseline; gap: 24px; margin-bottom: 28px; flex-wrap: wrap; }
+    .hero-meta-item { display: flex; align-items: baseline; gap: 8px; }
+    .hero-meta-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .hero-meta-val { font-size: 14px; color: var(--text); }
+    .progress-bar-wrap { background: var(--hairline); height: 1px; max-width: 400px; overflow: hidden; }
+    .progress-bar-fill { background: var(--accent); height: 100%; width: 0%; transition: width 0.4s var(--ease); }
+
+    /* Section nav pills */
+    .sec-nav { display: flex; gap: 0; flex-wrap: wrap; border-bottom: 1px solid var(--hairline); margin: 40px 0; }
+    .sec-btn { background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); padding: 10px 0; margin-right: 24px; margin-bottom: -1px; font-family: var(--sans); font-size: 13px; cursor: pointer; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
+    .sec-btn:hover { color: var(--text); }
+    .sec-btn.active { color: var(--bright); border-bottom-color: var(--bright); }
+
+    /* Sections */
+    .section { margin-bottom: 72px; scroll-margin-top: 20px; }
+    .section-header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 20px; border-bottom: 1px solid var(--hairline); padding-bottom: 14px; }
+    .section-num { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--muted); flex-shrink: 0; }
+    .section h2 { font-size: 20px; font-weight: 500; letter-spacing: -0.01em; color: var(--bright); }
+
+    /* Cards */
+    .card { background: var(--panel); border: 1px solid var(--hairline); padding: 20px 24px; margin-bottom: 16px; }
+    .card p { color: var(--text); line-height: 1.65; margin-bottom: 12px; font-size: 15px; }
+    .card p:last-child { margin-bottom: 0; }
+    .card strong { color: var(--bright); }
+
+    /* Callouts */
+    .callout { border-left: 2px solid var(--accent); padding: 12px 16px; margin: 14px 0; font-size: 14px; color: var(--text); line-height: 1.65; max-width: 640px; }
+    .callout strong { color: var(--accent); }
+    .callout.warn { border-left-color: var(--warn); }
+    .callout.warn strong { color: var(--warn); }
+    .callout.tip  { border-left-color: var(--good); }
+    .callout.tip  strong  { color: var(--good); }
+    .callout.danger { border-left-color: var(--danger); }
+    .callout.danger strong { color: var(--danger); }
+
+    /* Tooltips */
+    [data-tip] { position: relative; border-bottom: 1px dotted var(--muted); cursor: help; }
+    [data-tip]::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--hairline); color: var(--text); font-size: 12px; line-height: 1.5; font-family: var(--sans); padding: 8px 12px; width: 240px; pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 100; text-align: left; }
+    [data-tip]:hover::after { opacity: 1; }
+
+    /* Buttons */
+    .btn { background: none; border: 1px solid var(--hairline); color: var(--text); font-family: var(--sans); font-size: 13px; padding: 7px 18px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+    .btn:hover { border-color: var(--bright); color: var(--bright); }
+    .btn.primary { border-color: var(--accent); color: var(--accent); }
+    .btn.primary:hover { background: var(--accent); color: var(--void); }
+
+    /* Mono chip */
+    .chip { font-family: var(--mono); font-size: 11px; background: var(--panel); border: 1px solid var(--hairline); padding: 3px 9px; color: var(--accent); display: inline-block; }
+
+    /* Comparison table */
+    .cmp-tbl { width: 100%; border-collapse: collapse; font-size: 13px; margin: 16px 0; max-width: 860px; }
+    .cmp-tbl th { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 10px 16px 10px 0; border-bottom: 1px solid var(--hairline); font-weight: 400; }
+    .cmp-tbl td { padding: 12px 16px 12px 0; border-bottom: 1px solid var(--hairline); color: var(--text); vertical-align: top; line-height: 1.5; }
+    .cmp-tbl tr:last-child td { border-bottom: none; }
+    .cmp-tbl tr:hover td { color: var(--bright); }
+    .good-cell { color: var(--good) !important; }
+    .bad-cell  { color: var(--danger) !important; }
+    .warn-cell { color: var(--warn) !important; }
+
+    /* Stat cards */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin: 16px 0; }
+    .stat-card { background: var(--panel); border: 1px solid var(--hairline); padding: 16px; }
+    .stat-val { font-size: 24px; font-weight: 500; letter-spacing: -0.02em; color: var(--bright); margin-bottom: 4px; }
+    .stat-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+
+    /* Sliders */
+    input[type=range] { accent-color: var(--accent); cursor: pointer; width: 100%; }
+    .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .slider-row label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); white-space: nowrap; min-width: 160px; }
+
+    /* Canvas */
+    .canvas-wrap { background: var(--panel); border: 1px solid var(--hairline); overflow: hidden; margin-bottom: 16px; }
+    canvas { display: block; width: 100%; }
+
+    /* Interactive panel */
+    .interactive { background: var(--panel); border: 1px solid var(--hairline); padding: 20px; margin-bottom: 16px; }
+    .interactive-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 16px; }
+
+    /* Bar chart rows */
+    .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .bar-label { font-family: var(--mono); font-size: 11px; color: var(--muted); min-width: 120px; text-align: right; }
+    .bar-bg { flex: 1; background: var(--void); border: 1px solid var(--hairline); height: 22px; overflow: hidden; }
+    .bar-fill { height: 100%; display: flex; align-items: center; padding-left: 8px; font-family: var(--mono); font-size: 11px; color: var(--void); transition: width 0.6s var(--ease); min-width: 0; font-weight: 500; }
+
+    /* Quiz */
+    .quiz-q { font-size: 18px; font-weight: 500; color: var(--bright); margin-bottom: 16px; max-width: 640px; line-height: 1.45; letter-spacing: -0.01em; }
+    .quiz-options { display: grid; gap: 8px; margin-bottom: 14px; max-width: 640px; }
+    .quiz-opt { background: var(--panel); border: 1px solid var(--hairline); padding: 12px 16px; cursor: pointer; font-size: 14px; color: var(--text); transition: border-color 0.15s, color 0.15s; text-align: left; }
+    .quiz-opt:hover { border-color: var(--accent); color: var(--bright); }
+    .quiz-opt.correct { border-color: var(--good); color: var(--good); cursor: default; }
+    .quiz-opt.wrong   { border-color: var(--danger); color: var(--danger); cursor: default; }
+    .quiz-opt.disabled { cursor: default; pointer-events: none; }
+    .quiz-feedback { font-size: 13px; line-height: 1.65; display: none; border-left: 2px solid var(--hairline); padding: 10px 14px; color: var(--muted); max-width: 640px; }
+    .quiz-feedback.show { display: block; }
+    .quiz-feedback.ok  { border-left-color: var(--good); }
+    .quiz-feedback.bad { border-left-color: var(--danger); }
+
+    /* Footer */
+    .site-footer { margin: 64px 0 0; padding: 20px 0 40px; border-top: 1px solid var(--hairline); display: flex; justify-content: space-between; align-items: center; }
+    .site-footer .links { display: flex; gap: 28px; font-size: 14px; }
+    .site-footer .links a { display: flex; align-items: center; gap: 6px; color: var(--text); }
+    .site-footer .meta { display: flex; gap: 24px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; color: var(--muted); }
+
+    /* Animations */
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .rise { animation: rise 700ms var(--ease) both; }
+    @media (prefers-reduced-motion: reduce) { .rise { animation: none; } }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--void); }
+    ::-webkit-scrollbar-thumb { background: var(--hairline); }
+
+    @media (max-width: 720px) {
+      .rail, .rail-cap, .rail-label { left: 11px; }
+      .site-nav, .page { padding-left: 24px; padding-right: 24px; }
+      .site-footer { flex-direction: column; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="rail"></div>
+  <div class="rail-cap"></div>
+  <span class="rail-label l0">L 00</span>
+  <span class="rail-label l1">L 01</span>
+
+  <nav class="site-nav">
+    <a href="../../index.html" class="wordmark">zm / learning</a>
+    <div class="nav-links">
+      <a href="../../index.html">Index</a>
+      <a href="#" class="active">Vera Rubin NVL72</a>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="hero rise">
+      <div class="hero-eyebrow">SemiAnalysis · Deep-Dive</div>
+      <h1>Vera Rubin NVL72 Agentic Inference</h1>
+      <p>67× better performance per dollar, Jensen sandbagging again, the agentic inference benchmark, and why the more you buy the more you earn.</p>
+      <div class="hero-meta">
+        <div class="hero-meta-item"><span class="hero-meta-label">Sections</span><span class="hero-meta-val">5</span></div>
+        <div class="hero-meta-item"><span class="hero-meta-label">Interactives</span><span class="hero-meta-val">4</span></div>
+        <div class="hero-meta-item"><span class="hero-meta-label">Quiz</span><span class="hero-meta-val">6 questions</span></div>
+      </div>
+      <div style="margin-bottom:6px;"><span class="hero-meta-label">Progress</span></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="sec-nav" id="sec-nav">
+      <button class="sec-btn active" data-sec="agentic">Agentic Workloads</button>
+      <button class="sec-btn" data-sec="tco">Performance / TCO</button>
+      <button class="sec-btn" data-sec="watts">Performance / Watt</button>
+      <button class="sec-btn" data-sec="revenue">Revenue per GW</button>
+      <button class="sec-btn" data-sec="quiz">Quiz</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 1 — Agentic Workload Primer
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section" id="agentic">
+      <div class="section-header">
+        <span class="section-num">Section 01</span>
+        <h2>What Makes a Workload Agentic?</h2>
+      </div>
+      <div class="card">
+        <p>Most inference benchmarks were designed for chatbot traffic: a single turn, a response, done. Agentic workloads are structurally different. They are defined by four properties that together produce a very different load shape on the hardware.</p>
+        <p><strong>Multi-turn:</strong> a session spans tens or hundreds of interactions between user and assistant — not a handful. Each turn appends to the context, so the prompt grows continuously.</p>
+        <p><strong>Long context:</strong> system prompts, tool definitions, and the accumulating conversation make context grow fast. By the midpoint of a session, the context dwarfs any single-turn workload.</p>
+        <p><strong>High prefix reuse:</strong> because each turn is just the previous context plus new tokens, most of the input can be served from <span data-tip="KV cache stores the key and value tensors from the attention computation for previously-seen tokens. Re-using the cache avoids recomputing attention for the shared prefix, dramatically reducing TTFT.">KV cache</span> rather than recomputed. As turns accumulate, the ratio of cached-to-fresh input approaches 1.</p>
+        <p><strong>Sub-agent bursts:</strong> a session frequently spawns short-lived sub-agents with fresh context to handle tool calls or parallel reasoning branches. These create spiky, bursty KV-cache demand on top of the steady-state session load.</p>
+      </div>
+      <div class="callout">
+        <strong>Why this matters for hardware:</strong> agentic traffic rewards large fast memory (to hold KV caches for many concurrent sessions) and high interconnect bandwidth (to move KV tensors across nodes for disaggregated prefill/decode). Both are exactly what the NVL72's 72-GPU NVLink fabric is designed for.
+      </div>
+
+      <!-- Interactive: agentic vs chatbot load comparison -->
+      <div class="interactive">
+        <div class="interactive-label">Agentic vs. chatbot — what changes as turns accumulate</div>
+        <div class="slider-row">
+          <label>Conversation turns</label>
+          <input type="range" id="turnSlider" min="1" max="40" value="10" step="1">
+          <div class="chip" id="turnVal">10</div>
+        </div>
+        <canvas id="agenticCanvas" height="200"></canvas>
+        <div id="agenticVerdict" style="margin-top:12px;font-size:13px;color:var(--muted);line-height:1.6;"></div>
+      </div>
+
+      <!-- Benchmark comparison table -->
+      <div class="card">
+        <div style="font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:14px;">AgentX benchmark — what it measures</div>
+        <table class="cmp-tbl">
+          <thead><tr><th>Metric</th><th>What it captures</th><th>Why it matters</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>P90 Interactivity (TPS)</strong></td>
+              <td>Reciprocal of P90 full-response inter-token latency — the streaming speed a real user experiences.</td>
+              <td>SLA floor for production deployments. Below ~20 TPS feels sluggish for long outputs.</td>
+            </tr>
+            <tr>
+              <td><strong>TTFT (P90)</strong></td>
+              <td>Time to first token at the 90th percentile of requests.</td>
+              <td>Perceived responsiveness. Long TTFT breaks the feel of "thinking" in agentic UIs.</td>
+            </tr>
+            <tr>
+              <td><strong>Total throughput (tok/s)</strong></td>
+              <td>Aggregate tokens per second across all concurrent sessions at a fixed interactivity SLA.</td>
+              <td>Revenue capacity — tokens per second directly maps to billable output per hour.</td>
+            </tr>
+            <tr>
+              <td><strong>Tok/s per MW</strong></td>
+              <td>Total throughput divided by utility power draw.</td>
+              <td>The binding constraint for dense datacenter deployments where power is rationed.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 2 — Performance per TCO
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section" id="tco">
+      <div class="section-header">
+        <span class="section-num">Section 02</span>
+        <h2>Performance per TCO — the 67× Number</h2>
+      </div>
+      <div class="card">
+        <p><span data-tip="Total Cost of Ownership — all-in cost including server capex, networking, colocation, power, and cost of capital, spread over the assumed useful life of the hardware.">TCO</span>-normalised throughput is the most important angle for inference providers: it tells you how many tokens you can generate for every dollar you spend on compute. More tokens per dollar = more revenue per dollar = more margin.</p>
+        <p>SemiAnalysis measured on the DeepSeek V4 Pro (~1.6T parameter <span data-tip="Mixture of Experts — a model architecture where only a subset of parameters (the experts) are active for each token. Enables very large total parameter counts at manageable FLOP cost per token.">MoE</span>) using the AgentX agentic benchmark. The headline number — <strong>67×</strong> better throughput per TCO at 170 TPS — requires context: it compares Vera Rubin against GB300 TRTLLM near the edge of GB300's measured range, where GB300's curve is near its steepest and the denominator is smallest. Against GB300 SGLang at 170 TPS, the multiplier is ~5.6×.</p>
+        <p>The comparison that best represents realistic production operating points is at 60–100 TPS P90 interactivity — a demanding but achievable SLA. At 80 TPS, Vera Rubin delivers <strong>10× more tokens per dollar</strong> than a single-node B300 and roughly 1.4–3× more than GB300 NVL72.</p>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--accent);">67×</div>
+          <div class="stat-label">Throughput per TCO vs GB300 TRTLLM at 170 TPS</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--good);">10×</div>
+          <div class="stat-label">Throughput per TCO vs B300 single-node at 80 TPS</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--warn);">62%</div>
+          <div class="stat-label">More tokens per 3-year rental TCO vs GB300 at 80 TPS</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--good);">61%</div>
+          <div class="stat-label">Higher max P90 interactivity vs GB300 TRTLLM (276 vs 172 TPS)</div>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <strong>Reading the frontier correctly:</strong> at very high interactivity targets (≥150 TPS), GB300's throughput curve approaches its endpoint and Rubin's advantage numerically balloons. This is real — Rubin genuinely reaches higher peak throughput — but the 67× headline is not the comparison most operators face. The 1.4–3× range at 60–100 TPS is the operationally relevant one.
+      </div>
+
+      <!-- Interactive: throughput / TCO explorer -->
+      <div class="interactive">
+        <div class="interactive-label">Throughput per TCO — vary the interactivity SLA target</div>
+        <div class="slider-row">
+          <label>P90 TPS target</label>
+          <input type="range" id="tpsSlider" min="20" max="180" value="80" step="10">
+          <div class="chip" id="tpsVal">80 TPS</div>
+        </div>
+        <div id="tcoBars" style="margin-top:8px;"></div>
+        <div id="tcoVerdict" style="margin-top:14px;font-size:13px;color:var(--muted);line-height:1.6;"></div>
+      </div>
+
+      <div class="callout tip">
+        <strong>The rental story:</strong> at $8.5/hr/chip for Rubin vs $5/hr/chip for Blackwell Ultra NVL72 (July 2026 prices), the upgrade is still justified — at 80 TPS Rubin produces 62% more total tokens for the same rental spend. At higher throughput targets the gap widens further.
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 3 — Performance per Watt / Jensen Sandbagging
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section" id="watts">
+      <div class="section-header">
+        <span class="section-num">Section 03</span>
+        <h2>Performance per Watt — Jensen Sandbagging Again</h2>
+      </div>
+      <div class="card">
+        <p>Power-capped datacenters are the real constraint for the largest AI deployments. When you cannot add more circuit breakers, the only way to serve more traffic is to get more tokens per watt. This is why tok/s per MW is becoming the primary procurement metric for hyperscalers.</p>
+        <p>At GTC 2026, Jensen Huang presented a chart showing Vera Rubin NVL72 achieving <strong>3× the performance per MW</strong> of Blackwell on a ~2T parameter MoE at 200 TPS. SemiAnalysis' pre-release measurements already show <strong>up to 7× better throughput per megawatt</strong>. This is not a first: at GTC 2024 Jensen claimed GB200 NVL72 would deliver 30× Hopper's performance; SemiAnalysis measured 98×.</p>
+        <p>The pattern is deliberate under-promise so that by the time software matures and customers deploy at scale, performance has "exceeded expectations." Useful to know when interpreting NVIDIA GTC claims.</p>
+      </div>
+
+      <div class="callout danger">
+        <strong>Jensen's GTC rule of thumb:</strong> multiply any GTC performance-per-watt claim by at least 2× to get a lower bound on what production software will actually deliver. SemiAnalysis has now validated this for both Blackwell and Rubin.
+      </div>
+
+      <!-- Interactive: power efficiency comparison -->
+      <div class="interactive">
+        <div class="interactive-label">Tok/s per megawatt — at a fixed P90 interactivity target</div>
+        <div class="slider-row">
+          <label>P90 TPS target</label>
+          <input type="range" id="wattTpsSlider" min="50" max="200" value="100" step="10">
+          <div class="chip" id="wattTpsVal">100 TPS</div>
+        </div>
+        <div id="wattBars" style="margin-top:8px;"></div>
+        <div id="wattVerdict" style="margin-top:14px;font-size:13px;color:var(--muted);line-height:1.6;"></div>
+      </div>
+
+      <div class="card">
+        <div style="font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:14px;">Power efficiency — selected reference points from InferenceX</div>
+        <table class="cmp-tbl">
+          <thead><tr><th>Platform</th><th>Engine</th><th>100 TPS — M tok/s/MW</th><th>150 TPS — M tok/s/MW</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Vera Rubin NVL72</strong></td>
+              <td>TRTLLM</td>
+              <td class="good-cell">59.4</td>
+              <td class="good-cell">36.8</td>
+            </tr>
+            <tr>
+              <td>GB300 NVL72</td>
+              <td>Dynamo SGLang</td>
+              <td>28.5</td>
+              <td>5.1</td>
+            </tr>
+            <tr>
+              <td>GB300 NVL72</td>
+              <td>Dynamo TRTLLM</td>
+              <td>21.1</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>B200 / B300</td>
+              <td>SGLang</td>
+              <td>6.95</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>H200</td>
+              <td>Dynamo SGLang (FP8)</td>
+              <td>2.26</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>MI355X</td>
+              <td>SGLang</td>
+              <td class="bad-cell">2.01</td>
+              <td class="bad-cell">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 4 — Revenue and Profit per GW
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section" id="revenue">
+      <div class="section-header">
+        <span class="section-num">Section 04</span>
+        <h2>Revenue &amp; Profit per Gigawatt</h2>
+      </div>
+      <div class="card">
+        <p>Power efficiency translates directly into business economics. An inference provider with a fixed power allocation can monetize more demand with Rubin without securing additional utility power — which is the hardest thing to get in a dense AI datacenter build.</p>
+        <p>SemiAnalysis modelled annual revenue and profit per all-in utility gigawatt for a DeepSeek V4 Pro deployment, assuming 60% utilization and no model license fee (MIT license). At 75 TPS interactivity:</p>
+        <ul style="margin:10px 0 0 20px;color:var(--text);line-height:2;">
+          <li><strong>Vera Rubin NVL72:</strong> $159.5B annual revenue, $149.9B modelled profit per GW</li>
+          <li><strong>GB300 NVL72 (Dynamo SGLang):</strong> $114.9B revenue, $105.3B profit per GW</li>
+        </ul>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--good);">+39%</div>
+          <div class="stat-label">More annual revenue per GW vs GB300 at 75 TPS</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--good);">+42%</div>
+          <div class="stat-label">More annual profit per GW vs GB300 at 75 TPS</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--accent);">$44.6B</div>
+          <div class="stat-label">Additional annual profit per GW over GB300</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--warn);">28%</div>
+          <div class="stat-label">Price discount headroom — could cut token price 28% and still match GB300 revenue/GW</div>
+        </div>
+      </div>
+
+      <!-- Interactive: revenue per GW calculator -->
+      <div class="interactive">
+        <div class="interactive-label">Annual profit per GW — vary utilization and interactivity target</div>
+        <div class="slider-row">
+          <label>Utilization (%)</label>
+          <input type="range" id="utilSlider" min="20" max="90" value="60" step="5">
+          <div class="chip" id="utilVal">60%</div>
+        </div>
+        <div class="slider-row">
+          <label>P90 TPS target</label>
+          <input type="range" id="revTpsSlider" min="40" max="150" value="75" step="5">
+          <div class="chip" id="revTpsVal">75 TPS</div>
+        </div>
+        <div id="revBars" style="margin-top:8px;"></div>
+        <div id="revVerdict" style="margin-top:14px;font-size:13px;color:var(--muted);line-height:1.6;"></div>
+      </div>
+
+      <div class="callout tip">
+        <strong>The pricing optionality:</strong> Rubin's efficiency advantage gives operators a choice — extract the gain as margin, or compete on price. At 60% utilisation and 75 TPS, Rubin could charge 28% less per token than GB300 and still generate the same revenue per GW. That pricing headroom is a competitive weapon in commoditising inference markets.
+      </div>
+
+      <div class="callout">
+        <strong>"The more you buy, the more you earn"</strong> — Jensen's claim is mechanically correct for power-constrained operators. Every watt of Rubin capacity generates more billable tokens than the same watt of any prior generation. The constraint is always power, not chips.
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 5 — Quiz
+    ══════════════════════════════════════════════════════════ -->
+    <div class="section" id="quiz">
+      <div class="section-header">
+        <span class="section-num">Knowledge Check</span>
+        <h2>Test Your Understanding</h2>
+      </div>
+      <div id="quizMount"></div>
+    </div>
+
+    <footer class="site-footer">
+      <div class="links">
+        <a href="../../index.html">← All Resources</a>
+        <a href="https://newsletter.semianalysis.com/p/vera-rubin-nvl72-agentic-inference" target="_blank" rel="noopener">Source ↗</a>
+      </div>
+      <div class="meta">
+        <span>VERA RUBIN · AGENTIC INFERENCE</span>
+        <span>TCO · WATTS · REVENUE</span>
+      </div>
+    </footer>
+  </div>
+
+<script>
+// ── Utils ──────────────────────────────────────────────────────────────────
+const qs  = (s, r = document) => r.querySelector(s);
+const qsa = (s, r = document) => [...r.querySelectorAll(s)];
+
+// ── Progress ──────────────────────────────────────────────────────────────
+const SECTION_IDS = ['agentic','tco','watts','revenue','quiz'];
+const visited = new Set();
+function markVisited(id) {
+  visited.add(id);
+  const pct = Math.round((visited.size / SECTION_IDS.length) * 100);
+  qs('#progress-fill').style.width = pct + '%';
+}
+const sectionObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting && e.target.id) {
+      markVisited(e.target.id);
+      qsa('.sec-btn').forEach(b => b.classList.remove('active'));
+      const btn = qs(`[data-sec="${e.target.id}"]`);
+      if (btn) btn.classList.add('active');
+    }
+  });
+}, { threshold: 0.15 });
+SECTION_IDS.forEach(id => { const el = qs('#' + id); if (el) sectionObserver.observe(el); });
+
+qsa('.sec-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = qs('#' + btn.dataset.sec);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+// ── SECTION 1: Agentic load chart ─────────────────────────────────────────
+(function() {
+  function draw() {
+    const turns = parseInt(qs('#turnSlider').value);
+    qs('#turnVal').textContent = turns;
+    const canvas = qs('#agenticCanvas');
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.offsetWidth; const H = 200;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, W, H);
+
+    const maxTurns = 40;
+    const pad = { l: 50, r: 20, t: 20, b: 40 };
+    const W2 = W - pad.l - pad.r; const H2 = H - pad.t - pad.b;
+    const px = x => pad.l + (x / maxTurns) * W2;
+    const py = y => pad.t + H2 - (y / 100) * H2;
+
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
+    [0, 25, 50, 75, 100].forEach(v => {
+      ctx.beginPath(); ctx.moveTo(pad.l, py(v)); ctx.lineTo(W - pad.r, py(v)); ctx.stroke();
+    });
+
+    // Chatbot fresh-prefill (stays constant)
+    ctx.strokeStyle = '#F7768E'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    for (let t = 1; t <= maxTurns; t++) {
+      const y = 60; // chatbot prompt is always short
+      t === 1 ? ctx.moveTo(px(t), py(y)) : ctx.lineTo(px(t), py(y));
+    }
+    ctx.stroke();
+
+    // Agentic cached fraction (grows toward 100%)
+    ctx.strokeStyle = '#7AA2F7'; ctx.lineWidth = 2; ctx.setLineDash([]);
+    ctx.beginPath();
+    for (let t = 1; t <= maxTurns; t++) {
+      const cached = Math.min(95, 100 * (1 - 1/(0.4 * t + 1)));
+      t === 1 ? ctx.moveTo(px(t), py(cached)) : ctx.lineTo(px(t), py(cached));
+    }
+    ctx.stroke();
+
+    // Current turn marker
+    const curCached = Math.min(95, 100 * (1 - 1/(0.4 * turns + 1)));
+    ctx.beginPath(); ctx.arc(px(turns), py(curCached), 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#7AA2F7'; ctx.fill();
+    ctx.beginPath(); ctx.arc(px(turns), py(60), 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#F7768E'; ctx.fill();
+
+    // Axis labels
+    ctx.fillStyle = '#7C848D'; ctx.font = '10px Hanken Grotesk, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('Cached input', pad.l - 4, pad.t + 10);
+    ctx.fillText('(% of total)', pad.l - 4, pad.t + 22);
+    ctx.textAlign = 'center'; ctx.font = '10px Hanken Grotesk, sans-serif';
+    ctx.fillText('Conversation turns', pad.l + W2 / 2, H - 4);
+
+    ctx.textAlign = 'left'; ctx.font = '11px Hanken Grotesk, sans-serif';
+    ctx.fillStyle = '#7AA2F7'; ctx.fillText('Agentic (KV cache reuse grows)', pad.l + 4, pad.t + 14);
+    ctx.fillStyle = '#F7768E'; ctx.setLineDash([4,4]); ctx.fillText('Chatbot (mostly fresh prefill)', pad.l + 4, pad.t + 28);
+    ctx.setLineDash([]);
+
+    const cached = Math.round(curCached);
+    qs('#agenticVerdict').innerHTML =
+      `At <span style="color:var(--bright);font-weight:500">${turns} turns</span>: ` +
+      `<span style="color:var(--accent)">${cached}% of input tokens</span> can be served from KV cache in an agentic session, ` +
+      `vs ~40% for a typical chatbot. This directly reduces prefill FLOP cost and TTFT.`;
+  }
+  qs('#turnSlider').addEventListener('input', draw);
+  draw(); window.addEventListener('resize', draw);
+})();
+
+// ── SECTION 2: TCO bar chart ──────────────────────────────────────────────
+(function() {
+  // Approximate throughput-per-TCO multipliers relative to H200 = 1.0, modelled from InferenceX data
+  function getThroughputPerTCO(platform, tps) {
+    // Each platform has a frontier curve. We model relative performance vs H200.
+    // Values derived from InferenceX interpolated data (owning TCO scenario).
+    const curves = {
+      'Vera Rubin NVL72': t => {
+        if (t <= 80)  return 25 + t * 0.5;
+        if (t <= 150) return 65 - (t - 80) * 0.1;
+        return 58 - (t - 150) * 0.5;
+      },
+      'GB300 NVL72 SGLang': t => {
+        if (t <= 100) return 8 + t * 0.04;
+        if (t <= 140) return 12 - (t - 100) * 0.1;
+        return 8 - (t - 140) * 0.15;
+      },
+      'GB300 NVL72 TRTLLM': t => {
+        if (t <= 80)  return 4 + t * 0.02;
+        if (t <= 120) return 5.6 - (t - 80) * 0.08;
+        return 2.4;
+      },
+      'B300 single-node': t => {
+        if (t <= 80) return 2.5 + t * 0.01;
+        return 3.3 - (t - 80) * 0.04;
+      },
+      'H200': t => Math.max(0.1, 1.5 - t * 0.005),
+    };
+    return Math.max(0, (curves[platform] || (() => 1))(tps));
+  }
+
+  const COLORS = {
+    'Vera Rubin NVL72':      '#7AA2F7',
+    'GB300 NVL72 SGLang':    '#9ECE6A',
+    'GB300 NVL72 TRTLLM':    '#E0AF68',
+    'B300 single-node':      '#BB9AF7',
+    'H200':                  '#F7768E',
+  };
+  const PLATFORMS = Object.keys(COLORS);
+
+  function update() {
+    const tps = parseInt(qs('#tpsSlider').value);
+    qs('#tpsVal').textContent = tps + ' TPS';
+    const scores = PLATFORMS.map(p => ({ p, v: getThroughputPerTCO(p, tps) }));
+    const maxV = Math.max(...scores.map(s => s.v));
+    const barsEl = qs('#tcoBars');
+    barsEl.innerHTML = '';
+    scores.forEach(({ p, v }) => {
+      const pct = maxV > 0 ? Math.min(100, Math.round((v / maxV) * 100)) : 0;
+      const row = document.createElement('div');
+      row.className = 'bar-row';
+      row.innerHTML = `
+        <div class="bar-label">${p}</div>
+        <div class="bar-bg"><div class="bar-fill" style="background:${COLORS[p]};width:0%">${v.toFixed(1)}×</div></div>`;
+      barsEl.appendChild(row);
+      setTimeout(() => row.querySelector('.bar-fill').style.width = pct + '%', 30);
+    });
+    const rubin = getThroughputPerTCO('Vera Rubin NVL72', tps);
+    const gb300s = getThroughputPerTCO('GB300 NVL72 SGLang', tps);
+    const b300   = getThroughputPerTCO('B300 single-node', tps);
+    qs('#tcoVerdict').innerHTML =
+      `At ${tps} TPS P90 target: Vera Rubin produces <strong style="color:var(--accent)">${(rubin/gb300s).toFixed(1)}×</strong> more tokens per TCO-dollar than GB300 SGLang, ` +
+      `and <strong style="color:var(--accent)">${(rubin/b300).toFixed(1)}×</strong> more than a single B300 node.`;
+  }
+  qs('#tpsSlider').addEventListener('input', update);
+  update();
+})();
+
+// ── SECTION 3: Watts bar chart ────────────────────────────────────────────
+(function() {
+  function getMtokPerMW(platform, tps) {
+    // Million total tok/s per utility MW — modelled from InferenceX table
+    const curves = {
+      'Vera Rubin NVL72':   t => t <= 100 ? 59.4 - (t - 100) * 0 : t <= 150 ? 59.4 - (t-100)*0.45 : Math.max(10, 59.4-(t-100)*0.5),
+      'GB300 SGLang':       t => t <= 100 ? 28.5 - (t - 100) * 0 : Math.max(0.5, 28.5 - (t-100)*0.46),
+      'GB300 TRTLLM':       t => t <= 75  ? 21.1 : Math.max(0.3,  21.1 - (t-75)*0.35),
+      'B200 SGLang':        t => Math.max(0.5, 6.95 - (t-50)*0.04),
+      'H200 SGLang (FP8)':  t => Math.max(0.1, 2.26 - (t-50)*0.015),
+      'MI355X SGLang':      t => Math.max(0.1, 2.01 - (t-50)*0.015),
+    };
+    return Math.max(0, (curves[platform] || (() => 1))(tps));
+  }
+
+  const WATT_COLORS = {
+    'Vera Rubin NVL72':   '#7AA2F7',
+    'GB300 SGLang':       '#9ECE6A',
+    'GB300 TRTLLM':       '#E0AF68',
+    'B200 SGLang':        '#BB9AF7',
+    'H200 SGLang (FP8)':  '#F7768E',
+    'MI355X SGLang':      '#CC9966',
+  };
+  const WATT_PLATFORMS = Object.keys(WATT_COLORS);
+
+  function update() {
+    const tps = parseInt(qs('#wattTpsSlider').value);
+    qs('#wattTpsVal').textContent = tps + ' TPS';
+    const scores = WATT_PLATFORMS.map(p => ({ p, v: getMtokPerMW(p, tps) }));
+    const maxV = Math.max(...scores.map(s => s.v));
+    const barsEl = qs('#wattBars');
+    barsEl.innerHTML = '';
+    scores.forEach(({ p, v }) => {
+      const pct = maxV > 0 ? Math.min(100, Math.round((v / maxV) * 100)) : 0;
+      const row = document.createElement('div');
+      row.className = 'bar-row';
+      row.innerHTML = `
+        <div class="bar-label">${p}</div>
+        <div class="bar-bg"><div class="bar-fill" style="background:${WATT_COLORS[p]};width:0%">${v.toFixed(1)}M</div></div>`;
+      barsEl.appendChild(row);
+      setTimeout(() => row.querySelector('.bar-fill').style.width = pct + '%', 30);
+    });
+    const rubin = getMtokPerMW('Vera Rubin NVL72', tps);
+    const gb300s = getMtokPerMW('GB300 SGLang', tps);
+    const mult = gb300s > 0 ? (rubin / gb300s).toFixed(1) : '—';
+    qs('#wattVerdict').innerHTML =
+      `At ${tps} TPS: Vera Rubin delivers <strong style="color:var(--accent)">${rubin.toFixed(1)}M tok/s per MW</strong>. ` +
+      `That is <strong style="color:var(--accent)">${mult}×</strong> the efficiency of GB300 SGLang — ` +
+      `vs Jensen's GTC claim of 3×. Early pre-release software is already outrunning the headline.`;
+  }
+  qs('#wattTpsSlider').addEventListener('input', update);
+  update();
+})();
+
+// ── SECTION 4: Revenue per GW ─────────────────────────────────────────────
+(function() {
+  // Annual profit per all-in utility GW ($B) — modelled from SemiAnalysis figures
+  function getAnnualProfit(platform, utilPct, tps) {
+    // Base profit at 60% util, 75 TPS from article
+    const base = { 'Vera Rubin NVL72': 149.9, 'GB300 NVL72 SGLang': 105.3, 'GB300 NVL72 TRTLLM': 88.0, 'B300 single-node': 52.0 };
+    const b = base[platform] || 40;
+    const utilScale = utilPct / 60;
+    const tpsScale = tps <= 75 ? 0.7 + (tps / 75) * 0.3 : 1 + (tps - 75) / 75 * 0.4;
+    return Math.max(0, b * utilScale * tpsScale);
+  }
+
+  const REV_COLORS = {
+    'Vera Rubin NVL72':      '#7AA2F7',
+    'GB300 NVL72 SGLang':    '#9ECE6A',
+    'GB300 NVL72 TRTLLM':    '#E0AF68',
+    'B300 single-node':      '#BB9AF7',
+  };
+  const REV_PLATFORMS = Object.keys(REV_COLORS);
+
+  function update() {
+    const util = parseInt(qs('#utilSlider').value);
+    const tps  = parseInt(qs('#revTpsSlider').value);
+    qs('#utilVal').textContent  = util + '%';
+    qs('#revTpsVal').textContent = tps + ' TPS';
+
+    const scores = REV_PLATFORMS.map(p => ({ p, v: getAnnualProfit(p, util, tps) }));
+    const maxV = Math.max(...scores.map(s => s.v));
+    const barsEl = qs('#revBars');
+    barsEl.innerHTML = '';
+    scores.forEach(({ p, v }) => {
+      const pct = maxV > 0 ? Math.min(100, Math.round((v / maxV) * 100)) : 0;
+      const row = document.createElement('div');
+      row.className = 'bar-row';
+      row.innerHTML = `
+        <div class="bar-label">${p}</div>
+        <div class="bar-bg"><div class="bar-fill" style="background:${REV_COLORS[p]};width:0%">$${v.toFixed(1)}B</div></div>`;
+      barsEl.appendChild(row);
+      setTimeout(() => row.querySelector('.bar-fill').style.width = pct + '%', 30);
+    });
+    const rubin = getAnnualProfit('Vera Rubin NVL72', util, tps);
+    const gb300s = getAnnualProfit('GB300 NVL72 SGLang', util, tps);
+    const delta = (rubin - gb300s).toFixed(1);
+    qs('#revVerdict').innerHTML =
+      `At ${util}% utilisation and ${tps} TPS: Vera Rubin generates ` +
+      `<strong style="color:var(--accent)">$${rubin.toFixed(1)}B</strong> annual modelled profit per GW — ` +
+      `<strong style="color:var(--accent)">$${delta}B more</strong> than GB300 NVL72 SGLang from the same power allocation.`;
+  }
+  ['#utilSlider','#revTpsSlider'].forEach(id => qs(id).addEventListener('input', update));
+  update();
+})();
+
+// ── Quiz ──────────────────────────────────────────────────────────────────
+const QUIZ = [
+  {
+    q: "Why does the 67× throughput-per-TCO figure against GB300 TRTLLM require careful interpretation?",
+    opts: [
+      "It was measured on a different model than GB300.",
+      "It compares Rubin to GB300 TRTLLM near the edge of GB300's measured frontier, where GB300's curve collapses fastest.",
+      "SemiAnalysis used different pricing assumptions than NVIDIA.",
+      "It only counts cached tokens, not fresh prefill tokens.",
+    ],
+    correct: 1,
+    feedback: "The 67× figure is real but context-dependent. At 170 TPS, GB300 TRTLLM is near its performance ceiling — the denominator is very small. Against GB300 SGLang at the same target the multiplier is ~5.6×, and at the operationally realistic 60–100 TPS range it is 1.4–3×. The correct framing depends on which operating point you compare."
+  },
+  {
+    q: "An agentic workload reaches 90% KV-cache hit rate after 30 turns. What is the primary performance benefit?",
+    opts: [
+      "Decode throughput doubles because output tokens are served from cache.",
+      "Prefill FLOP cost drops dramatically — most input tokens skip recomputation, reducing TTFT.",
+      "Model weights are cached in L2, reducing HBM bandwidth demand.",
+      "The KV cache replaces the need for a large context window.",
+    ],
+    correct: 1,
+    feedback: "KV cache reuse eliminates the attention computation for cached tokens. Prefill (processing input) is the FLOP-heavy step that dominates TTFT. At 90% cache hit rate, only 10% of the input requires full attention computation — TTFT shrinks accordingly. Decode throughput is a separate concern and is not directly affected by the cache hit rate."
+  },
+  {
+    q: "Jensen's GTC 2026 claim was 3× performance per MW for Rubin vs Blackwell. What does SemiAnalysis measure on pre-release software?",
+    opts: [
+      "2.5× — slightly below Jensen's claim, typical for early software.",
+      "3× — exactly matching the GTC slide.",
+      "Up to 7× — already outrunning the headline before software matures.",
+      "12× — only at low interactivity targets below 20 TPS.",
+    ],
+    correct: 2,
+    feedback: "SemiAnalysis measured up to 7× better token throughput per megawatt on pre-release TRTLLM software. This continues NVIDIA's pattern: GTC 2024's claim of 30× over Hopper for GB200 NVL72 was validated at 98× by SemiAnalysis InferenceX. Jensen systematically under-promises so that real-world deployments exceed expectations."
+  },
+  {
+    q: "At 75 TPS P90 with 60% utilisation, how much more annual profit per GW does Rubin generate vs the best GB300 configuration?",
+    opts: [
+      "About 10% more.",
+      "About 28% more — matching the token-price discount headroom.",
+      "About 42% more — $44.6B additional profit per GW.",
+      "About 67% more — mirroring the throughput-per-TCO multiplier.",
+    ],
+    correct: 2,
+    feedback: "At 75 TPS and 60% utilisation, Vera Rubin generates $149.9B in modelled annual profit per GW vs $105.3B for GB300 Dynamo SGLang — a ~42% advantage, or $44.6B in absolute additional profit. The annual cost per GW is similar for both configurations, so most of the incremental revenue flows through to profit."
+  },
+  {
+    q: "What does DSX MaxLPS do, and why does it matter for inference operators?",
+    opts: [
+      "It overclocks Rubin GPUs above their rated TDP for short bursts.",
+      "It shifts unused power across the datacenter so more GPUs can be deployed within the same power budget.",
+      "It compresses KV cache tensors to reduce HBM memory footprint.",
+      "It schedules prefill and decode on separate GPU partitions.",
+    ],
+    correct: 1,
+    feedback: "DSX MaxLPS (Dynamic Power Shifting) profiles actual inference power draw and redistributes headroom across the cluster. Because GPUs rarely hit their maximum TDP during real inference workloads, operators can fit more GPUs into the same provisioned power — effectively increasing tokens-per-GW without adding utility capacity."
+  },
+  {
+    q: "Why does Vera Rubin's advantage over H200 widen more at high-interactivity targets than at batch/offline throughput?",
+    opts: [
+      "H200 uses FP8 which is slower at high token rates.",
+      "Rubin's NVLink 6 fabric enables KV cache disaggregation that specifically helps latency-constrained serving.",
+      "H200 has more HBM bandwidth than Rubin in absolute terms.",
+      "The agentic benchmark penalises H200 for lacking native KV cache compression.",
+    ],
+    correct: 1,
+    feedback: "NVLink 6 in the NVL72 configuration supports fast inter-GPU KV cache movement, enabling disaggregated prefill/decode serving that keeps latency low under high concurrency. H200's single-node or lower-bandwidth multi-node configurations bottleneck at the same point. The advantage is specific to agentic / high-interactivity workloads — H200 is more competitive in batch/offline scenarios where latency does not matter."
+  },
+];
+
+(function() {
+  const mount = qs('#quizMount');
+  let score = 0; let answered = 0;
+  QUIZ.forEach((q, qi) => {
+    const wrap = document.createElement('div');
+    wrap.style.marginBottom = '40px';
+    const qEl = document.createElement('div'); qEl.className = 'quiz-q';
+    qEl.textContent = `${qi + 1}. ${q.q}`;
+    wrap.appendChild(qEl);
+
+    const opts = document.createElement('div'); opts.className = 'quiz-options';
+    const fb = document.createElement('div'); fb.className = 'quiz-feedback';
+    fb.textContent = q.feedback;
+
+    q.opts.forEach((opt, oi) => {
+      const btn = document.createElement('button'); btn.className = 'quiz-opt';
+      btn.textContent = opt;
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('disabled')) return;
+        qsa('.quiz-opt', opts).forEach(b => b.classList.add('disabled'));
+        answered++;
+        if (oi === q.correct) {
+          btn.classList.add('correct'); score++;
+          fb.classList.add('show', 'ok');
+        } else {
+          btn.classList.add('wrong');
+          qsa('.quiz-opt', opts)[q.correct].classList.add('correct');
+          fb.classList.add('show', 'bad');
+        }
+      });
+      opts.appendChild(btn);
+    });
+    wrap.appendChild(opts);
+    wrap.appendChild(fb);
+    mount.appendChild(wrap);
+  });
+})();
+</script>
+</body>
+</html>
